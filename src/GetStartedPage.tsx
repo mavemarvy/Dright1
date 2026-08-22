@@ -13,6 +13,10 @@ type GetStartedProps = {
 export default function GetStartedPage({ onSignUp, onSignIn, onBack }: GetStartedProps) {
   const [error, setError] = useState('');
 
+  const goToSignup = () => {
+    window.location.assign('/signup.html');
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-card get-started-card">
@@ -24,7 +28,7 @@ export default function GetStartedPage({ onSignUp, onSignIn, onBack }: GetStarte
         </div>
 
         <div className="get-started-actions">
-          <button type="button" className="auth-submit" onClick={onSignUp}>
+          <button type="button" className="auth-submit" onClick={goToSignup}>
             <UserPlus size={17} />
             Sign up
             <ArrowRight size={17} />
