@@ -1,65 +1,116 @@
-/* DRIGHT1 — authoritative theme/accessibility layer */
+/* DRIGHT1 — final theme/accessibility overrides */
 
-/* The metallic D must sit optically in the center of the tile. */
-.dright-logo-svg{transform:translateY(-3px)}
-.dright-logo-compact .dright-logo-svg{transform:translateY(-1px)}
+/* Optical centering: the metallic D is mathematically centered but visually sits low because of its lower-heavy silhouette. */
+.dright-logo-svg{transform:translateY(-6px)!important}
+.dright-logo-compact .dright-logo-svg{transform:translateY(-3px)!important}
 
-/* Custom theme palettes. These are intentionally high-contrast and avoid low-contrast text. */
+/* =========================================================
+   CUSTOM THEMES
+   All three custom presets intentionally remain dark.
+   This prevents the bright/light preset from washing out the UI
+   and keeps text, chat-style content and controls readable.
+   ========================================================= */
 .theme-custom.custom-sky{
-  --bg:#241a14!important;
-  --surface:#30231b!important;
-  --surface2:#3c2c21!important;
-  --border:#624a38!important;
-  --text:#fffaf5!important;
-  --muted:#dcc9b8!important;
-  --primary:#d09a68!important;
-  --primary2:#a86f43!important;
-  --accent:#f2c9a2!important;
-  --soft:#2b1f18!important;
+  --bg:#17110d!important;
+  --surface:#211812!important;
+  --surface2:#2b2018!important;
+  --border:#4b382b!important;
+  --text:#fff8f1!important;
+  --muted:#cbbcaf!important;
+  --primary:#d29a68!important;
+  --primary2:#a96f42!important;
+  --accent:#e8b889!important;
+  --soft:#1c140f!important;
   color-scheme:dark!important;
 }
 
 .theme-custom.custom-graphite{
-  --bg:#14211b!important;
-  --surface:#1e3027!important;
-  --surface2:#294034!important;
-  --border:#486053!important;
-  --text:#f8fcf8!important;
-  --muted:#c3d2c6!important;
-  --primary:#8eb99a!important;
-  --primary2:#679076!important;
-  --accent:#c9e4cf!important;
-  --soft:#192a22!important;
+  --bg:#0e1413!important;
+  --surface:#151d1a!important;
+  --surface2:#1d2823!important;
+  --border:#35483f!important;
+  --text:#f4faf6!important;
+  --muted:#b6c6bd!important;
+  --primary:#7fa98d!important;
+  --primary2:#5e846d!important;
+  --accent:#a8c8b4!important;
+  --soft:#111916!important;
   color-scheme:dark!important;
 }
 
 .theme-custom.custom-violet{
-  --bg:#f3eadf!important;
-  --surface:#fffaf3!important;
-  --surface2:#eadbca!important;
-  --border:#cdb79f!important;
-  --text:#30251d!important;
-  --muted:#6f6257!important;
-  --primary:#996b46!important;
-  --primary2:#765033!important;
-  --accent:#c89a70!important;
-  --soft:#eee1d1!important;
-  color-scheme:light!important;
+  --bg:#121019!important;
+  --surface:#1b1723!important;
+  --surface2:#26202f!important;
+  --border:#493d58!important;
+  --text:#f8f4fb!important;
+  --muted:#c2b6cb!important;
+  --primary:#b08bc4!important;
+  --primary2:#8d68a4!important;
+  --accent:#d0b4dc!important;
+  --soft:#15121b!important;
+  color-scheme:dark!important;
 }
 
-/* Make every normal UI surface inherit the selected custom palette. */
+/* Apply the palette to the actual application, including UI that uses
+   Tailwind-like slate/gray utility classes in the frontend. */
 .theme-custom,
-.theme-custom body{color:var(--text)}
+.theme-custom body{color:var(--text)!important;background:var(--bg)!important}
+
+.theme-custom h1,
+.theme-custom h2,
+.theme-custom h3,
+.theme-custom h4,
+.theme-custom strong,
+.theme-custom label,
+.theme-custom span,
+.theme-custom button,
+.theme-custom a,
+.theme-custom svg{color:inherit}
+
 .theme-custom input,
 .theme-custom textarea,
 .theme-custom select,
-.theme-custom option,
-.theme-custom button{color:var(--text)}
-.theme-custom input,
-.theme-custom textarea,
-.theme-custom select{background:var(--surface)}
+.theme-custom option{color:var(--text)!important;background:var(--surface)!important;border-color:var(--border)!important}
+
 .theme-custom input::placeholder,
 .theme-custom textarea::placeholder{color:var(--muted)!important;opacity:1!important}
+
+/* Explicitly replace common hard-coded low-contrast utility colors. */
+.theme-custom .text-slate-300,
+.theme-custom .text-slate-400,
+.theme-custom .text-slate-500,
+.theme-custom .text-slate-600,
+.theme-custom .text-gray-400,
+.theme-custom .text-gray-500,
+.theme-custom .text-gray-600,
+.theme-custom .text-neutral-400,
+.theme-custom .text-neutral-500,
+.theme-custom .text-neutral-600{color:var(--muted)!important}
+
+.theme-custom .text-white{color:var(--text)!important}
+.theme-custom .text-black{color:var(--bg)!important}
+.theme-custom .bg-white{background:var(--surface)!important}
+.theme-custom .bg-black{background:var(--bg)!important}
+.theme-custom .bg-slate-900,
+.theme-custom .bg-slate-800,
+.theme-custom .bg-slate-700,
+.theme-custom .bg-neutral-900,
+.theme-custom .bg-neutral-800{background:var(--surface)!important}
+.theme-custom .border-slate-700,
+.theme-custom .border-slate-800,
+.theme-custom .border-slate-600,
+.theme-custom .border-neutral-700{border-color:var(--border)!important}
+
+.theme-custom .bg-sky-500,
+.theme-custom .bg-blue-500,
+.theme-custom .bg-blue-600{background:var(--primary)!important}
+.theme-custom .text-sky-500,
+.theme-custom .text-sky-400,
+.theme-custom .text-blue-500,
+.theme-custom .text-blue-600{color:var(--primary)!important}
+.theme-custom .border-sky-500,
+.theme-custom .border-blue-500{border-color:var(--primary)!important}
 
 .theme-custom .header-search,
 .theme-custom .hero-search,
@@ -98,9 +149,7 @@
 .theme-custom .icon-btn,
 .theme-custom .theme-trigger,
 .theme-custom .sidebar-nav button,
-.theme-custom .sidebar-bottom button{
-  color:var(--muted)!important;
-}
+.theme-custom .sidebar-bottom button{color:var(--muted)!important}
 
 .theme-custom .desktop-nav button:hover,
 .theme-custom .icon-btn:hover,
@@ -126,29 +175,25 @@
   color:#fff!important;
 }
 
-/* Explicit labels for the three custom presets: Cocoa, Forest, Sandstone. */
+/* The custom preset names are kept independent of the old Sky/Graphite/Violet
+   naming so the selector communicates the actual professional palettes. */
 .theme-custom .custom-theme-list button:nth-child(1) strong,
 .theme-custom .custom-theme-list button:nth-child(2) strong,
-.theme-custom .custom-theme-list button:nth-child(3) strong{
-  font-size:13px!important;
-}
-.theme-custom .custom-theme-list button:nth-child(1) strong{font-size:0!important}
-.theme-custom .custom-theme-list button:nth-child(1) strong:after{content:'Cocoa';font-size:13px}
-.theme-custom .custom-theme-list button:nth-child(2) strong{font-size:0!important}
-.theme-custom .custom-theme-list button:nth-child(2) strong:after{content:'Forest';font-size:13px}
 .theme-custom .custom-theme-list button:nth-child(3) strong{font-size:0!important}
-.theme-custom .custom-theme-list button:nth-child(3) strong:after{content:'Sandstone';font-size:13px}
+.theme-custom .custom-theme-list button:nth-child(1) strong:after{content:'Cocoa';font-size:13px}
+.theme-custom .custom-theme-list button:nth-child(2) strong:after{content:'Forest';font-size:13px}
+.theme-custom .custom-theme-list button:nth-child(3) strong:after{content:'Aubergine';font-size:13px}
 
-/* Custom theme swatches must preview their own palette instead of inheriting the active palette. */
-.theme-custom .custom-theme-list button:nth-child(1) .custom-dot{background:#d09a68!important}
-.theme-custom .custom-theme-list button:nth-child(2) .custom-dot{background:#8eb99a!important}
-.theme-custom .custom-theme-list button:nth-child(3) .custom-dot{background:#c89a70!important}
+.theme-custom .custom-theme-list button:nth-child(1) .custom-dot{background:#d29a68!important}
+.theme-custom .custom-theme-list button:nth-child(2) .custom-dot{background:#7fa98d!important}
+.theme-custom .custom-theme-list button:nth-child(3) .custom-dot{background:#b08bc4!important}
 
 /* Preserve contrast for image/product artwork. */
 .theme-custom .product-image{color:#fff!important}
 .theme-custom .product-image>span{color:#fff!important}
 
-/* DRIGHT System actually follows the device preference. */
+/* DRIGHT System follows the device preference while retaining the existing
+   DRIGHT Light palette when the device is light. */
 .theme-dright-system{color-scheme:light}
 @media (prefers-color-scheme:dark){
   .theme-dright-system{
