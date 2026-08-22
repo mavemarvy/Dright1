@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import { GoogleAuthButton } from './AuthPages';
 import './auth.css';
+import './get-started.css';
 
 type GetStartedProps = {
   onSignUp: () => void;
