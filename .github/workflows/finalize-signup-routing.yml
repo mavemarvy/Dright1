@@ -1,0 +1,33 @@
+name: Finalize DRIGHT signup routing
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: ${{ !contains(github.event.head_commit.message, 'chore: finalize signup routing') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove duplicate React signup route
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/main.tsx')
+          s = p.read_text()
+          s = s.replace("import SignupPage from './SignupPage';\n", "")
+          s = s.replace(":page==='signup'?<SignupPage themeClass={themes[theme].className} onBack={()=>setPage('get-started')} onComplete={()=>setPage('welcome')}/>", ":page==='signup'?<div />")
+          p.write_text(s)
+          Path('src/SignupPage.tsx').unlink(missing_ok=True)
+          Path('.github/workflows/integrate-signup.yml').unlink(missing_ok=True)
+          Path('.github/workflows/finalize-signup-routing.yml').unlink(missing_ok=True)
+          PY
+          git config user.name 'DRIGHT Engineering AI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: finalize signup routing'
+          git push
