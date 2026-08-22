@@ -1,62 +1,66 @@
-/* DRIGHT1 theme reliability + logo alignment overrides */
+/* DRIGHT1 — authoritative theme/accessibility layer */
 
-/* Keep the metallic D optically centered inside its tile. */
-.dright-logo-svg{transform:translateY(-2px)}
+/* The metallic D must sit optically in the center of the tile. */
+.dright-logo-svg{transform:translateY(-3px)}
 .dright-logo-compact .dright-logo-svg{transform:translateY(-1px)}
 
-/* Custom themes: professional, readable palettes with deliberate contrast. */
+/* Custom theme palettes. These are intentionally high-contrast and avoid low-contrast text. */
 .theme-custom.custom-sky{
-  --bg:#211914!important;
-  --surface:#2b211b!important;
-  --surface2:#372a22!important;
-  --border:#5a4536!important;
+  --bg:#241a14!important;
+  --surface:#30231b!important;
+  --surface2:#3c2c21!important;
+  --border:#624a38!important;
   --text:#fffaf5!important;
-  --muted:#d1c0b1!important;
-  --primary:#c58a58!important;
-  --primary2:#9b673d!important;
-  --accent:#f1c7a2!important;
-  --soft:#2a201a!important;
+  --muted:#dcc9b8!important;
+  --primary:#d09a68!important;
+  --primary2:#a86f43!important;
+  --accent:#f2c9a2!important;
+  --soft:#2b1f18!important;
   color-scheme:dark!important;
 }
 
 .theme-custom.custom-graphite{
-  --bg:#17211c!important;
-  --surface:#202d26!important;
-  --surface2:#293a31!important;
-  --border:#405449!important;
-  --text:#f6fbf5!important;
-  --muted:#bdcbbf!important;
-  --primary:#83a98d!important;
-  --primary2:#5f826a!important;
-  --accent:#c4ddc8!important;
-  --soft:#1b2821!important;
+  --bg:#14211b!important;
+  --surface:#1e3027!important;
+  --surface2:#294034!important;
+  --border:#486053!important;
+  --text:#f8fcf8!important;
+  --muted:#c3d2c6!important;
+  --primary:#8eb99a!important;
+  --primary2:#679076!important;
+  --accent:#c9e4cf!important;
+  --soft:#192a22!important;
   color-scheme:dark!important;
 }
 
 .theme-custom.custom-violet{
-  --bg:#f4eee6!important;
-  --surface:#fffaf4!important;
-  --surface2:#eee3d6!important;
-  --border:#d5c4b1!important;
-  --text:#30261f!important;
-  --muted:#75675b!important;
-  --primary:#9a6b45!important;
+  --bg:#f3eadf!important;
+  --surface:#fffaf3!important;
+  --surface2:#eadbca!important;
+  --border:#cdb79f!important;
+  --text:#30251d!important;
+  --muted:#6f6257!important;
+  --primary:#996b46!important;
   --primary2:#765033!important;
-  --accent:#c99b70!important;
-  --soft:#f0e6da!important;
+  --accent:#c89a70!important;
+  --soft:#eee1d1!important;
   color-scheme:light!important;
 }
 
-/* Force readable UI text, fields, chat-like surfaces and controls in every custom palette. */
+/* Make every normal UI surface inherit the selected custom palette. */
+.theme-custom,
+.theme-custom body{color:var(--text)}
 .theme-custom input,
 .theme-custom textarea,
 .theme-custom select,
-.theme-custom option{
-  color:var(--text)!important;
-  background:var(--surface)!important;
-}
+.theme-custom option,
+.theme-custom button{color:var(--text)}
+.theme-custom input,
+.theme-custom textarea,
+.theme-custom select{background:var(--surface)}
 .theme-custom input::placeholder,
 .theme-custom textarea::placeholder{color:var(--muted)!important;opacity:1!important}
+
 .theme-custom .header-search,
 .theme-custom .hero-search,
 .theme-custom .market-search,
@@ -66,16 +70,17 @@
 .theme-custom .market-hero,
 .theme-custom .secondary,
 .theme-custom .sort,
-.theme-custom .profile-avatar{
+.theme-custom .profile-avatar,
+.theme-custom .ai-card,
+.theme-custom .hero-panel{
   color:var(--text)!important;
   background-color:var(--surface)!important;
   border-color:var(--border)!important;
 }
-.theme-custom .ai-card,
-.theme-custom .hero-panel{
-  color:var(--text)!important;
-  border-color:var(--border)!important;
-}
+
+.theme-custom .hero-panel{background:linear-gradient(145deg,var(--surface2),var(--surface))!important}
+.theme-custom .ai-card{background:var(--surface2)!important}
+
 .theme-custom .ai-card p,
 .theme-custom .hero-copy>p,
 .theme-custom .product-body p,
@@ -85,17 +90,18 @@
 .theme-custom .mini-stat span,
 .theme-custom .theme-head span,
 .theme-custom .theme-option small,
-.theme-custom .custom-theme-list small{
-  color:var(--muted)!important;
-}
+.theme-custom .custom-theme-list small,
+.theme-custom .product-top small,
+.theme-custom .sort,
+.theme-custom .guest-action,
 .theme-custom .desktop-nav button,
 .theme-custom .icon-btn,
 .theme-custom .theme-trigger,
-.theme-custom .guest-action,
 .theme-custom .sidebar-nav button,
 .theme-custom .sidebar-bottom button{
   color:var(--muted)!important;
 }
+
 .theme-custom .desktop-nav button:hover,
 .theme-custom .icon-btn:hover,
 .theme-custom .theme-trigger:hover,
@@ -110,25 +116,47 @@
   background:var(--surface2)!important;
   border-color:var(--border)!important;
 }
+
 .theme-custom .primary,
 .theme-custom .hero-search button,
-.theme-custom .category-pills button.active{
+.theme-custom .category-pills button.active,
+.theme-custom .guest-primary{
   background:var(--primary)!important;
   border-color:var(--primary)!important;
   color:#fff!important;
 }
 
-/* Rename the three custom presets without changing the existing state keys. */
+/* Explicit labels for the three custom presets: Cocoa, Forest, Sandstone. */
 .theme-custom .custom-theme-list button:nth-child(1) strong,
 .theme-custom .custom-theme-list button:nth-child(2) strong,
-.theme-custom .custom-theme-list button:nth-child(3) strong{font-size:0}
-.theme-custom .custom-theme-list button:nth-child(1) strong:after{content:'Cocoa';font-size:inherit}
-.theme-custom .custom-theme-list button:nth-child(2) strong:after{content:'Forest';font-size:inherit}
-.theme-custom .custom-theme-list button:nth-child(3) strong:after{content:'Sandstone';font-size:inherit}
+.theme-custom .custom-theme-list button:nth-child(3) strong{
+  font-size:13px!important;
+}
+.theme-custom .custom-theme-list button:nth-child(1) strong{font-size:0!important}
+.theme-custom .custom-theme-list button:nth-child(1) strong:after{content:'Cocoa';font-size:13px}
+.theme-custom .custom-theme-list button:nth-child(2) strong{font-size:0!important}
+.theme-custom .custom-theme-list button:nth-child(2) strong:after{content:'Forest';font-size:13px}
+.theme-custom .custom-theme-list button:nth-child(3) strong{font-size:0!important}
+.theme-custom .custom-theme-list button:nth-child(3) strong:after{content:'Sandstone';font-size:13px}
 
-/* Preserve contrast for intentionally light-on-image product art. */
+/* Custom theme swatches must preview their own palette instead of inheriting the active palette. */
+.theme-custom .custom-theme-list button:nth-child(1) .custom-dot{background:#d09a68!important}
+.theme-custom .custom-theme-list button:nth-child(2) .custom-dot{background:#8eb99a!important}
+.theme-custom .custom-theme-list button:nth-child(3) .custom-dot{background:#c89a70!important}
+
+/* Preserve contrast for image/product artwork. */
 .theme-custom .product-image{color:#fff!important}
 .theme-custom .product-image>span{color:#fff!important}
+
+/* DRIGHT System actually follows the device preference. */
+.theme-dright-system{color-scheme:light}
+@media (prefers-color-scheme:dark){
+  .theme-dright-system{
+    --bg:#070b12;--surface:#101722;--surface2:#151e2b;--border:#263246;
+    --text:#f8fafc;--muted:#9aa8ba;--primary:#94a3b8;--primary2:#64748b;
+    --accent:#e2e8f0;--soft:#0d141e;color-scheme:dark;
+  }
+}
 
 @media (max-width:900px){
   .theme-custom .header-search{background:var(--surface)!important}
