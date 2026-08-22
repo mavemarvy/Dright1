@@ -1,8 +1,8 @@
 /* DRIGHT1 — custom theme + logo refinement */
 
-/* Optical centering: move the D slightly left and upward inside the tile. */
-.dright-logo-svg{transform:translate(-3px,-6px)!important}
-.dright-logo-compact .dright-logo-svg{transform:translate(-2px,-4px)!important}
+/* Optical centering: the D is slightly larger, shifted left, and lowered a little. */
+.dright-logo-svg{transform:translate(-3px,-2px)!important;transform-origin:center!important;}
+.dright-logo-compact .dright-logo-svg{transform:translate(-2px,-1px) scale(1.08)!important;transform-origin:center!important;}
 
 /* =========================================================
    CUSTOM THEMES
