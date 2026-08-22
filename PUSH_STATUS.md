@@ -1,0 +1,1 @@
+GitHub write access confirmed. DRIGHT1 frontend files were pushed to main. No Supabase or production deployment performed.
