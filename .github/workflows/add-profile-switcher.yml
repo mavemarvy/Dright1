@@ -1,0 +1,51 @@
+name: Add sidebar profile switcher
+on:
+  push:
+    branches: [main]
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[profile-switcher-complete]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add collapsible profile switcher above Dashboard
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/main.tsx')
+          s=p.read_text()
+          old="import {Search, Menu, Bell, Globe2, ChevronDown, ArrowRight, Sparkles, ShoppingBag, BriefcaseBusiness, GraduationCap, Megaphone, CheckCircle2, Heart, Share2, MessageCircle, ArrowLeft, SlidersHorizontal, X, Palette, UserRound, LayoutDashboard, Wallet, Users, Settings, HelpCircle, LogOut} from 'lucide-react';"
+          new="import {Search, Menu, Bell, Globe2, ChevronDown, ArrowRight, Sparkles, ShoppingBag, BriefcaseBusiness, GraduationCap, Megaphone, CheckCircle2, Heart, Share2, MessageCircle, ArrowLeft, SlidersHorizontal, X, Palette, UserRound, LayoutDashboard, Wallet, Users, Settings, HelpCircle, LogOut, UserCog, Store, Building2, Briefcase, UserRoundCheck} from 'lucide-react';"
+          if old not in s: raise SystemExit('lucide import target not found')
+          s=s.replace(old,new,1)
+          old="const [themeOpen,setThemeOpen]=useState(false); const [sidebarOpen,setSidebarOpen]=useState(false);"
+          new="const [themeOpen,setThemeOpen]=useState(false); const [sidebarOpen,setSidebarOpen]=useState(false); const [profileOpen,setProfileOpen]=useState(false); const [activeProfile,setActiveProfile]=useState(()=>localStorage.getItem('dright-active-profile')||'Buyer');"
+          if old not in s: raise SystemExit('state target not found')
+          s=s.replace(old,new,1)
+          old="{signedIn&&<Sidebar open={sidebarOpen} onClose={()=>setSidebarOpen(false)} onWelcome={()=>setPage('welcome')} onMarket={()=>setPage('market')} onSignOut={signOut}/>}"
+          new="{signedIn&&<Sidebar open={sidebarOpen} onClose={()=>setSidebarOpen(false)} onWelcome={()=>setPage('welcome')} onMarket={()=>setPage('market')} onSignOut={signOut} activeProfile={activeProfile} setActiveProfile={(profile)=>{setActiveProfile(profile);localStorage.setItem('dright-active-profile',profile)}} profileOpen={profileOpen} setProfileOpen={setProfileOpen}/>}"
+          if old not in s: raise SystemExit('sidebar call target not found')
+          s=s.replace(old,new,1)
+          start="function Sidebar({open,onClose,onWelcome,onMarket,onSignOut}:{open:boolean;onClose:()=>void;onWelcome:()=>void;onMarket:()=>void;onSignOut:()=>void}){"
+          if start not in s: raise SystemExit('sidebar signature target not found')
+          replacement="function Sidebar({open,onClose,onWelcome,onMarket,onSignOut,activeProfile,setActiveProfile,profileOpen,setProfileOpen}:{open:boolean;onClose:()=>void;onWelcome:()=>void;onMarket:()=>void;onSignOut:()=>void;activeProfile:string;setActiveProfile:(profile:string)=>void;profileOpen:boolean;setProfileOpen:(open:boolean)=>void}){const profiles=[{name:'Buyer',icon:UserRoundCheck,description:'Discover and buy'},{name:'Seller',icon:Store,description:'Sell products and services'},{name:'Employer',icon:Building2,description:'Hire and manage work'},{name:'Freelancer',icon:Briefcase,description:'Offer your skills'},{name:'Affiliate',icon:Users,description:'Promote and earn'}];return <aside className={`left-sidebar ${open?'open':''}`}><div className="sidebar-logo"><DrightLogoIcon/></div><div className="sidebar-profile-switcher"><button className={`profile-switcher-trigger ${profileOpen?'expanded':''}`} onClick={()=>setProfileOpen(!profileOpen)} aria-expanded={profileOpen} aria-haspopup="menu"><span className="profile-switcher-icon"><UserCog size={18}/></span><span className="profile-switcher-copy"><small>Switch profile</small><strong>{activeProfile}</strong></span><ChevronDown size={17} className={`profile-switcher-chevron ${profileOpen?'rotated':''}`}/></button>{profileOpen&&<div className="profile-switcher-menu" role="menu">{profiles.map(profile=>{const Icon=profile.icon;return <button key={profile.name} className={`profile-option ${activeProfile===profile.name?'active':''}`} onClick={()=>{setActiveProfile(profile.name);setProfileOpen(false)}} role="menuitem"><span className="profile-option-icon"><Icon size={17}/></span><span><strong>{profile.name}</strong><small>{profile.description}</small></span>{activeProfile===profile.name&&<CheckCircle2 size={16}/>}</button>})}</div>}</div><div className="sidebar-nav"><button onClick={onWelcome}><LayoutDashboard size={18}/> Dashboard</button><button onClick={onMarket}><ShoppingBag size={18}/> Marketplace</button><button><Users size={18}/> Referral</button><button><Wallet size={18}/> Wallet</button><button><Heart size={18}/> Favorites</button><button><MessageCircle size={18}/> Messages</button><button><Bell size={18}/> Notifications</button><button><Settings size={18}/> Settings</button><button><HelpCircle size={18}/> Help & Support</button></div><div className="sidebar-bottom"><button onClick={onSignOut}><LogOut size={18}/> Logout</button></div><button className="sidebar-close" onClick={onClose}><X size={18}/></button></aside>}"
+          s=s.replace(start,replacement,1)
+          p.write_text(s)
+
+          p=Path('src/styles.css')
+          s=p.read_text()
+          css='''\n/* Sidebar profile switcher — additive UI; existing navigation remains unchanged. */\n.sidebar-profile-switcher{position:relative;margin:4px 14px 14px}.profile-switcher-trigger{width:100%;display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid var(--border,#e2e8f0);background:var(--surface,#fff);color:inherit;border-radius:14px;text-align:left;cursor:pointer;transition:.18s ease}.profile-switcher-trigger:hover,.profile-switcher-trigger.expanded{background:var(--surface-soft,#f8fafc);border-color:var(--border-strong,#cbd5e1)}.profile-switcher-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--surface-soft,#f1f5f9);flex:0 0 auto}.profile-switcher-copy{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.15}.profile-switcher-copy small{font-size:10px;color:var(--muted,#64748b);margin-bottom:3px}.profile-switcher-copy strong{font-size:13px;font-weight:700}.profile-switcher-chevron{transition:transform .18s ease}.profile-switcher-chevron.rotated{transform:rotate(180deg)}.profile-switcher-menu{position:absolute;z-index:50;left:0;right:0;top:calc(100% + 6px);padding:6px;background:var(--surface,#fff);border:1px solid var(--border,#e2e8f0);border-radius:14px;box-shadow:0 14px 32px rgba(15,23,42,.12)}.profile-option{width:100%;display:flex;align-items:center;gap:10px;padding:9px;border:0;background:transparent;color:inherit;border-radius:10px;text-align:left;cursor:pointer}.profile-option:hover,.profile-option.active{background:var(--surface-soft,#f8fafc)}.profile-option-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--surface-soft,#f1f5f9);flex:0 0 auto}.profile-option>span:nth-child(2){display:flex;flex-direction:column;flex:1;min-width:0}.profile-option strong{font-size:12px}.profile-option small{font-size:10px;color:var(--muted,#64748b);margin-top:2px}.profile-option svg:last-child{flex:0 0 auto}\n'''
+          marker='/* Sidebar profile switcher — additive UI; existing navigation remains unchanged. */'
+          if marker not in s: s += css
+          p.write_text(s)
+          PY
+      - name: Commit and remove one-time workflow
+        run: |
+          rm -f .github/workflows/add-profile-switcher.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/main.tsx src/styles.css .github/workflows/add-profile-switcher.yml
+          git commit -m 'Add collapsible sidebar profile switcher [profile-switcher-complete]'
+          git push
