@@ -1,0 +1,86 @@
+name: Apply signup username availability UI fix
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'Apply signup username availability UI fix') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch signup username field
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('public/signup.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '<script>const API='
+          if marker not in s:
+              raise SystemExit('signup script marker not found')
+          css = '''<style>#usernameStatus{font-size:12px;line-height:1.4;margin-top:-2px}.username-ok{color:#166534}.username-taken{color:#991b1b}.username-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}.username-suggestion{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 9px;font-size:12px;cursor:pointer;color:#334155}.username-suggestion:hover{background:#f1f5f9}</style>'''
+          s = s.replace('</style></head>', css + '</style></head>', 1)
+          old = '<input id="username" class="control" required placeholder="your_username" autocomplete="username" pattern="[A-Za-z0-9_]{3,30}">'
+          new = old + '<div id="usernameStatus" aria-live="polite"></div>'
+          if old not in s:
+              raise SystemExit('username input not found')
+          s = s.replace(old, new, 1)
+          inject = r'''<script>
+(function(){
+  const usernameInput=document.getElementById('username');
+  const usernameStatus=document.getElementById('usernameStatus');
+  if(!usernameInput||!usernameStatus)return;
+  const SUPA_URL='https://jkqddapfluevbrzfdtsl.supabase.co';
+  const SUPA_KEY='sb_publishable_Oq52s8TINBuJitmrbh0hag_vrPWHKXJ';
+  let timer,checking=false,lastChecked='';
+  function clean(v){return v.trim().toLowerCase()}
+  function show(text,cls,suggestions=[]){usernameStatus.className=cls?'username-'+cls:'';usernameStatus.innerHTML=text+(suggestions.length?'<div class="username-suggestions">'+suggestions.map(x=>'<button type="button" class="username-suggestion" data-u="'+x.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+x+'</button>').join('')+'</div>':'');usernameStatus.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{usernameInput.value=b.dataset.u;usernameInput.dispatchEvent(new Event('input',{bubbles:true}));usernameInput.focus()})}
+  async function check(){
+    const u=clean(usernameInput.value);
+    if(u===lastChecked)return true;
+    if(!/^[a-z0-9_]{3,30}$/.test(u)){if(u)show('Username must be 3–30 characters using letters, numbers or underscores.','taken');else usernameStatus.innerHTML='';return false}
+    lastChecked=u;checking=true;show('Checking username…','');
+    try{
+      const r=await fetch(SUPA_URL+'/rest/v1/rpc/is_username_available',{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_username:u})});
+      if(!r.ok)throw new Error('availability check failed');
+      const available=await r.json();
+      if(available){show('✓ Username is available.','ok');return true}
+      const suggestions=[];
+      for(let i=0;suggestions.length<5&&i<40;i++){
+        const n=i===0?Math.floor(Math.random()*900)+10:Math.floor(Math.random()*9000)+100;
+        const candidate=u.replace(/[^a-z0-9_]/g,'')+n;
+        const rr=await fetch(SUPA_URL+'/rest/v1/rpc/is_username_available',{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_username:candidate})});
+        if(rr.ok&&await rr.json())suggestions.push(candidate);
+      }
+      show('Username <strong>'+u.replace(/</g,'&lt;')+'</strong> is already taken. Try one of these available usernames:', 'taken', suggestions);
+      return false;
+    }catch(e){show('We could not check the username right now. Please try again.','taken');return false}
+    finally{checking=false}
+  }
+  usernameInput.addEventListener('input',()=>{lastChecked='';clearTimeout(timer);timer=setTimeout(check,450)});
+  usernameInput.addEventListener('blur',check);
+  window.__drightUsernameCheck=check;
+})();
+</script>'''
+          s = s.replace('</body></html>', inject + '</body></html>', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Add submit-time username guard
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('public/signup.html'); s=p.read_text(encoding='utf-8')
+          needle="form.addEventListener('submit',async e=>{e.preventDefault();message.className='message';"
+          repl="form.addEventListener('submit',async e=>{e.preventDefault();message.className='message';if(window.__drightUsernameCheck&&!(await window.__drightUsernameCheck())){submit.disabled=false;return;}"
+          if needle not in s: raise SystemExit('submit marker not found')
+          s=s.replace(needle,repl,1)
+          p.write_text(s,encoding='utf-8')
+      - name: Commit and remove one-time workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-username-ui-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/signup.html .github/workflows/apply-username-ui-fix.yml
+          git commit -m 'Apply signup username availability UI fix' || exit 0
+          git push
