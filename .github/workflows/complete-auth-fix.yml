@@ -1,0 +1,35 @@
+name: Complete DRIGHT1 auth wiring
+on:
+  push:
+    branches: [main]
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[auth-wiring-complete]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire signup auth and marketplace redirect
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('public/signup.html')
+          s=p.read_text()
+          tag='<script src="/signup-auth.js"></script>'
+          if tag not in s:
+              s=s.replace('</body>',tag+'</body>')
+              p.write_text(s)
+          p=Path('src/main.tsx')
+          s=p.read_text()
+          s=s.replace("if(next) setPage('welcome')", "if(next) setPage('market')")
+          s=s.replace("onAuthenticated={()=>setPage('welcome')}", "onAuthenticated={()=>setPage('market')}")
+          p.write_text(s)
+          PY
+      - name: Commit auth wiring
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/signup.html src/main.tsx
+          git diff --cached --quiet || git commit -m 'Complete DRIGHT1 signup signin auth routing [auth-wiring-complete]'
+          git push
