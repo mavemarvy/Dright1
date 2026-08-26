@@ -1,0 +1,43 @@
+name: Fix unsupported Lucide brand icons
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/AffiliateDashboard.tsx'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, '[lucide-brand-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace unsupported brand imports with supported Lucide icons
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/AffiliateDashboard.tsx')
+          s = p.read_text()
+          s = s.replace(' UserPlus, Instagram, Youtube, Facebook, Linkedin, Send, X', ' UserPlus, Globe2, Video, MessageCircle, Briefcase, Send, X')
+          s = s.replace('UserPlus, Instagram, Youtube, Facebook, Linkedin, Send, X', 'UserPlus, Globe2, Video, MessageCircle, Briefcase, Send, X')
+          s = s.replace('<Instagram', '<Globe2').replace('</Instagram>', '</Globe2>')
+          s = s.replace('<Youtube', '<Video').replace('</Youtube>', '</Video>')
+          s = s.replace('<Facebook', '<MessageCircle').replace('</Facebook>', '</MessageCircle>')
+          s = s.replace('<Linkedin', '<Briefcase').replace('</Linkedin>', '</Briefcase>')
+          p.write_text(s)
+          PY
+      - name: Verify and commit
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/AffiliateDashboard.tsx
+          if git diff --cached --quiet; then
+            echo 'No changes required.'
+          else
+            git commit -m 'fix: replace unsupported lucide brand icons [lucide-brand-fix]'
+            git push
+          fi
