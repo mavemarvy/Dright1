@@ -1,14 +1,15 @@
 (() => {
-  const isSeller = () => {
+  const activeProfile = () => {
     const trigger = document.querySelector('.profile-switcher-trigger strong');
-    return trigger?.textContent?.trim().toLowerCase() === 'seller';
+    return trigger?.textContent?.trim().toLowerCase() || '';
   };
 
   const syncAffiliateAnalyticsVisibility = () => {
+    const profile = activeProfile();
     document.querySelectorAll('.sidebar-nav button').forEach((button) => {
       const label = button.textContent?.trim().toLowerCase() || '';
-      if (label.includes('affiliate analytics')) {
-        button.style.display = isSeller() ? 'none' : '';
+      if (label.includes('affiliate analytics') && profile !== 'affiliate') {
+        button.remove();
       }
     });
   };
