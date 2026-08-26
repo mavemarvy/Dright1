@@ -1,0 +1,43 @@
+name: Expose Affiliate Sales Team
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/main.tsx'
+      - '.github/workflows/fix-affiliate-sales-team-sidebar.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-sidebar:
+    if: ${{ !contains(github.event.head_commit.message, '[affiliate-sidebar-fix]') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add complete Affiliate profile sidebar
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/main.tsx')
+          s = p.read_text()
+          old = "<button onClick={onAffiliateDashboard}><BarChart3 size={18}/> Affiliate Dashboard</button><button onClick={onAffiliateAnalytics}><BarChart3 size={18}/> Affiliate Analytics</button><button><Link2 size={18}/> Affiliate Links</button><button><Wallet size={18}/> Earnings</button>"
+          new = "<button onClick={onAffiliateDashboard}><LayoutDashboard size={18}/> Affiliate Dashboard</button><button onClick={onAffiliateDashboard}><Link2 size={18}/> Affiliate Links</button><button onClick={onAffiliateDashboard}><ShoppingBag size={18}/> Products</button><button onClick={onAffiliateDashboard}><BarChart3 size={18}/> Sales</button><button onClick={onAffiliateDashboard}><Wallet size={18}/> Commissions</button><button onClick={onAffiliateAnalytics}><BarChart3 size={18}/> Analytics</button><button onClick={onAffiliateDashboard}><Users size={18}/> Sales Team</button><button onClick={onAffiliateDashboard}><Megaphone size={18}/> Promotions</button><button onClick={onAffiliateDashboard}><MessageCircle size={18}/> Messages</button><button><Settings size={18}/> Settings</button>"
+          if old not in s:
+              raise SystemExit('Affiliate sidebar anchor not found; no changes made.')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Verify
+        run: |
+          grep -q 'Sales Team' src/main.tsx
+          grep -q 'Affiliate Dashboard' src/main.tsx
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/main.tsx
+          git commit -m 'fix: expose Sales Team in affiliate profile sidebar [affiliate-sidebar-fix]'
+          git push
