@@ -10,6 +10,7 @@ if (!root) throw new Error('DRIGHT Seller root element was not found.');
 function SellerShellFix() {
   useEffect(() => {
     const style = document.createElement('style');
+    style.id = 'dright-seller-shell-fix';
     style.textContent = `
       .seller-sidebar{min-height:0!important;overflow:hidden!important}
       .seller-sidebar nav{min-height:0!important;flex:1 1 auto!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;padding-right:4px!important;scrollbar-width:thin}
@@ -46,7 +47,7 @@ function SellerShellFix() {
 
     const observer = new MutationObserver(() => {
       const nav = document.querySelector('.seller-sidebar nav');
-      if (nav) {
+      if (nav instanceof HTMLElement) {
         nav.style.minHeight = '0';
         nav.style.flex = '1 1 auto';
         nav.style.overflowY = 'auto';
