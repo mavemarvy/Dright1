@@ -14,7 +14,29 @@ export default function SellerCommandCenter({back}:{back:()=>void}){
  const dates=useMemo(()=>{const to=new Date();const from=new Date(to.getTime()-Number(range)*86400000);return {from:from.toISOString(),to:to.toISOString()}},[range]);
  const load=async()=>{setLoading(true);setError('');const [s,a,p]=await Promise.all([supabase.rpc('seller_dashboard_summary',{p_from:dates.from,p_to:dates.to}),supabase.rpc('seller_affiliate_performance',{p_from:dates.from,p_to:dates.to}),supabase.rpc('seller_product_performance',{p_from:dates.from,p_to:dates.to})]);if(s.error)setError(s.error.message);setSummary({...emptySummary,...(s.data||{})});setAffiliates(a.error?[]:(a.data||[]));setProducts(p.error?[]:(p.data||[]));setLoading(false)};
  useEffect(()=>{load()},[dates.from,dates.to]);
- const copy=async(text:string)=>{await navigator.clipboard.writeText(text);setCopied(text);setTimeout(()=>setCopied(''),1500)};
+ useEffect(()=>{
+   localStorage.setItem('dright-active-profile','Seller');
+   const syncSellerIdentity=async()=>{
+     const {data:{user}}=await supabase.auth.getUser();
+     if(!user)return;
+     const {data}=await supabase.from('profiles').select('first_name,last_name,username').eq('id',user.id).maybeSingle();
+     const name=[data?.first_name,data?.last_name].filter(Boolean).join(' ').trim()||data?.username||user.email?.split('@')[0]||'DRIGHT Seller';
+     const strong=document.querySelector('.profile-switcher-copy strong') as HTMLElement|null;
+     const small=document.querySelector('.profile-switcher-copy small') as HTMLElement|null;
+     if(strong)strong.textContent=name;
+     if(small)small.textContent='DRIGHT profile · Seller';
+     const trigger=document.querySelector('.profile-switcher-trigger') as HTMLElement|null;
+     if(trigger)trigger.setAttribute('aria-label',`DRIGHT profile: Seller — ${name}`);
+   };
+   syncSellerIdentity();
+   if(window.innerWidth<=900){
+     window.setTimeout(()=>{
+       const menu=document.querySelector('.menu-btn') as HTMLButtonElement|null;
+       if(menu && !document.querySelector('.left-sidebar.open'))menu.click();
+     },50);
+   }
+ },[]);
+ const copy=async(text:string)=>{try{await navigator.clipboard.writeText(text);setCopied(text);setTimeout(()=>setCopied(''),1500)}catch{setCopied('')}};
  const maxRevenue=Math.max(1,...products.map(p=>Number(p.total_sales)||0));
  return <main className="seller-command-center"><div className="seller-command-header"><button className="back-link" onClick={back}><ArrowLeft size={16}/> Marketplace</button><div><span className="section-kicker">DRIGHT Seller / Vendor</span><h1>Seller Command Center</h1><p>Sales, products, promotions, affiliate attribution and authorized sales-team performance in the same DRIGHT ecosystem.</p></div><div className="seller-controls"><select value={range} onChange={e=>setRange(e.target.value)}><option value="1">Today</option><option value="7">7 days</option><option value="28">28 days</option><option value="30">30 days</option><option value="90">90 days</option></select><button onClick={load} title="Refresh"><RefreshCw size={16}/></button></div></div>
  {error&&<div className="seller-error">{error}</div>}
