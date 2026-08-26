@@ -1,0 +1,93 @@
+name: Fix Affiliate Sales Team Navigation
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch navigation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/AffiliateDashboard.tsx')
+          s = p.read_text()
+
+          old = "export default function AffiliateDashboard({back,onMenu}:{back:()=>void;onMenu?:()=>void}){"
+          new = "export default function AffiliateDashboard({back,onMenu,initialTab}:{back:()=>void;onMenu?:()=>void;initialTab?:string}){"
+          if old not in s:
+              raise SystemExit('AffiliateDashboard signature not found')
+          s = s.replace(old, new, 1)
+
+          old = "const [userId,setUserId]=useState<string|null>(null); const [links,setLinks]=useState<LinkMetric[]>([]); const [events,setEvents]=useState<Event[]>([]); const [range,setRange]=useState<Range>('Month'); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [copied,setCopied]=useState<string|null>(null); const [tab,setTab]=useState('Affiliate Dashboard');"
+          new = "const [userId,setUserId]=useState<string|null>(null); const [links,setLinks]=useState<LinkMetric[]>([]); const [events,setEvents]=useState<Event[]>([]); const [range,setRange]=useState<Range>('Month'); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [copied,setCopied]=useState<string|null>(null); const [tab,setTab]=useState(initialTab||'Affiliate Dashboard');"
+          if old not in s:
+              raise SystemExit('tab state not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('src/main.tsx')
+          s = p.read_text()
+          old = "const openAffiliate=()=>{setSidebarOpen(false);setPage('affiliate-dashboard')};"
+          new = "const openAffiliate=()=>{setSidebarOpen(false);setPage('affiliate-dashboard')}; const openAffiliateSalesTeam=()=>{setSidebarOpen(false);setPage('affiliate-dashboard-sales-team')};"
+          if old not in s:
+              raise SystemExit('openAffiliate not found')
+          s = s.replace(old, new, 1)
+
+          old = "type Page='welcome'|'get-started'|'market'|'product'|'signin'|'admin'|'learning'|'affiliate-analytics'|'affiliate-dashboard'|'seller-dashboard';"
+          new = "type Page='welcome'|'get-started'|'market'|'product'|'signin'|'admin'|'learning'|'affiliate-analytics'|'affiliate-dashboard'|'affiliate-dashboard-sales-team'|'seller-dashboard';"
+          if old not in s:
+              raise SystemExit('Page type not found')
+          s = s.replace(old, new, 1)
+
+          old = "onAffiliateDashboard={openAffiliate} onSellerDashboard={openSeller}"
+          new = "onAffiliateDashboard={openAffiliate} onAffiliateSalesTeam={openAffiliateSalesTeam} onSellerDashboard={openSeller}"
+          if old not in s:
+              raise SystemExit('Sidebar props not found')
+          s = s.replace(old, new, 1)
+
+          old = "{page==='affiliate-dashboard'&&<AffiliateDashboard back={()=>setPage('market')} onMenu={()=>setSidebarOpen(true)}/>}"
+          new = "{page==='affiliate-dashboard'&&<AffiliateDashboard back={()=>setPage('market')} onMenu={()=>setSidebarOpen(true)}/>} {page==='affiliate-dashboard-sales-team'&&<AffiliateDashboard back={()=>setPage('market')} onMenu={()=>setSidebarOpen(true)} initialTab='Sales Team'/>}"
+          if old not in s:
+              raise SystemExit('Affiliate page render not found')
+          s = s.replace(old, new, 1)
+
+          old = "function Sidebar({open,onClose,onWelcome,onMarket,onLearning,onAffiliateAnalytics,onAffiliateDashboard,onSellerDashboard,onSignOut,onAdmin}:"
+          new = "function Sidebar({open,onClose,onWelcome,onMarket,onLearning,onAffiliateAnalytics,onAffiliateDashboard,onAffiliateSalesTeam,onSellerDashboard,onSignOut,onAdmin}:"
+          if old not in s:
+              raise SystemExit('Sidebar signature not found')
+          s = s.replace(old, new, 1)
+
+          old = "onAffiliateAnalytics:()=>void;onAffiliateDashboard:()=>void;onSellerDashboard:()=>void;"
+          new = "onAffiliateAnalytics:()=>void;onAffiliateDashboard:()=>void;onAffiliateSalesTeam:()=>void;onSellerDashboard:()=>void;"
+          if old not in s:
+              raise SystemExit('Sidebar type props not found')
+          s = s.replace(old, new, 1)
+
+          old = "<button><Wallet size={18}/> Earnings</button>:"
+          new = "<button><Wallet size={18}/> Earnings</button><button onClick={onAffiliateSalesTeam}><Users size={18}/> Sales Team</button>:"
+          if old not in s:
+              raise SystemExit('Affiliate sidebar insertion point not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+
+          npm run build
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/AffiliateDashboard.tsx src/main.tsx
+          git commit -m "fix: make affiliate Sales Team button open Sales Team" || exit 0
+          git push
+      - name: Remove one-time fixer
+        if: success()
+        run: |
+          git rm .github/workflows/fix-sales-team-navigation.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: remove one-time navigation fixer"
+          git push
