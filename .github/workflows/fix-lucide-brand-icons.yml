@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/AffiliateDashboard.tsx'
+      - '.github/workflows/fix-lucide-brand-icons.yml'
 
 permissions:
   contents: write
