@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import SellerDashboard from './SellerDashboard';
 import { supabase } from './supabase';
+import './seller-dright-theme.css';
 
 const root = document.getElementById('seller-root');
 if (!root) throw new Error('DRIGHT Seller root element was not found.');
@@ -24,10 +25,18 @@ function SellerShellFix() {
     `;
     document.head.appendChild(style);
 
-    let cancelled = false;
     let switcher: HTMLDivElement | null = null;
     let collapseButton: HTMLButtonElement | null = null;
     let outsideClick: ((event: MouseEvent) => void) | null = null;
+
+    const applyDrightTheme = () => {
+      const shell = document.querySelector('.seller-shell');
+      if (!(shell instanceof HTMLElement)) return;
+      const saved = localStorage.getItem('dright-theme');
+      const theme = saved === 'dark' || saved === 'light' || saved === 'system' || saved === 'red' ? saved : 'light';
+      shell.classList.remove('theme-dright-dark','theme-dright-light','theme-dright-system','theme-dright-red');
+      shell.classList.add(`theme-dright-${theme}`);
+    };
 
     const navigateProfile = (profile: string) => {
       const paths: Record<string,string> = {
@@ -42,6 +51,7 @@ function SellerShellFix() {
       const sidebar = document.querySelector('.seller-sidebar');
       const identity = document.querySelector('.seller-identity');
       const nav = sidebar?.querySelector('nav');
+      applyDrightTheme();
       if (!(sidebar instanceof HTMLElement) || !(identity instanceof HTMLElement) || !(nav instanceof HTMLElement)) return;
 
       if (!sidebar.querySelector('.dright-admin-entry')) {
@@ -84,7 +94,7 @@ function SellerShellFix() {
     observer.observe(document.documentElement, { childList:true, subtree:true });
     install();
 
-    return () => { cancelled = true; observer.disconnect(); if (outsideClick) document.removeEventListener('click', outsideClick); switcher?.remove(); collapseButton?.remove(); style.remove(); };
+    return () => { observer.disconnect(); if (outsideClick) document.removeEventListener('click', outsideClick); switcher?.remove(); collapseButton?.remove(); style.remove(); };
   }, []);
   return null;
 }
