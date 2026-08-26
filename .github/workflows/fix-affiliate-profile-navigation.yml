@@ -1,0 +1,96 @@
+name: Fix Affiliate Profile Navigation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch affiliate navigation
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('src/main.tsx')
+          s = p.read_text()
+
+          old = "const openAffiliate=()=>{setSidebarOpen(false);setPage('affiliate-dashboard')};"
+          new = "const openAffiliate=(tab='Affiliate Dashboard')=>{setSidebarOpen(false);setPage('affiliate-dashboard');window.dispatchEvent(new CustomEvent('dright-affiliate-tab',{detail:tab}))};"
+          if old not in s:
+              raise SystemExit('openAffiliate anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = "onAffiliateDashboard={openAffiliate} onSellerDashboard={openSeller}"
+          new = "onAffiliateDashboard={openAffiliate} onSellerDashboard={openSeller}"
+          if old not in s:
+              raise SystemExit('Sidebar prop anchor not found')
+
+          old = "onAffiliateDashboard,onSellerDashboard,onSignOut,onAdmin}:{open:boolean;onClose:()=>void;onWelcome:()=>void;onMarket:()=>void;onLearning:()=>void;onAffiliateAnalytics:()=>void;onAffiliateDashboard:()=>void;onSellerDashboard:()=>void;onSignOut:()=>void;onAdmin?:()=>void}"
+          new = "onAffiliateDashboard,onSellerDashboard,onSignOut,onAdmin}:{open:boolean;onClose:()=>void;onWelcome:()=>void;onMarket:()=>void;onLearning:()=>void;onAffiliateAnalytics:()=>void;onAffiliateDashboard:(tab?:string)=>void;onSellerDashboard:()=>void;onSignOut:()=>void;onAdmin?:()=>void}"
+          if old not in s:
+              raise SystemExit('Sidebar type anchor not found')
+          s = s.replace(old, new, 1)
+
+          replacements = {
+            "<button onClick={onAffiliateDashboard}><LayoutDashboard size={18}/> Affiliate Dashboard</button>": "<button onClick={()=>onAffiliateDashboard('Affiliate Dashboard')}><LayoutDashboard size={18}/> Affiliate Dashboard</button>",
+            "<button onClick={onAffiliateDashboard}><Link2 size={18}/> Affiliate Links</button>": "<button onClick={()=>onAffiliateDashboard('Affiliate Links')}><Link2 size={18}/> Affiliate Links</button>",
+            "<button onClick={onAffiliateDashboard}><ShoppingBag size={18}/> Products</button>": "<button onClick={()=>onAffiliateDashboard('Products')}><ShoppingBag size={18}/> Products</button>",
+            "<button onClick={onAffiliateDashboard}><BarChart3 size={18}/> Sales</button>": "<button onClick={()=>onAffiliateDashboard('Sales')}><BarChart3 size={18}/> Sales</button>",
+            "<button onClick={onAffiliateDashboard}><Wallet size={18}/> Commissions</button>": "<button onClick={()=>onAffiliateDashboard('Commissions')}><Wallet size={18}/> Commissions</button>",
+            "<button onClick={onAffiliateDashboard}><Users size={18}/> Sales Team</button>": "<button onClick={()=>onAffiliateDashboard('Sales Team')}><Users size={18}/> Sales Team</button>",
+            "<button onClick={onAffiliateDashboard}><Megaphone size={18}/> Promotions</button>": "<button onClick={()=>onAffiliateDashboard('Promotions')}><Megaphone size={18}/> Promotions</button>",
+            "<button onClick={onAffiliateDashboard}><MessageCircle size={18}/> Messages</button>": "<button onClick={()=>onAffiliateDashboard('Messages')}><MessageCircle size={18}/> Messages</button>",
+          }
+          for a,b in replacements.items():
+              if a not in s:
+                  raise SystemExit(f'Affiliate nav anchor not found: {a}')
+              s = s.replace(a,b,1)
+
+          # Affiliate Settings is merged into the single general Settings item below.
+          affiliate_settings = "<button><Settings size={18}/> Settings</button>:</>"
+          if affiliate_settings not in s:
+              raise SystemExit('Affiliate duplicate Settings anchor not found')
+          s = s.replace(affiliate_settings, "</>", 1)
+
+          p.write_text(s)
+
+      - name: Patch AffiliateDashboard initial tab support
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('src/AffiliateDashboard.tsx')
+          s = p.read_text()
+
+          old = "export default function AffiliateDashboard({back,onMenu}:{back:()=>void;onMenu?:()=>void}){"
+          new = "export default function AffiliateDashboard({back,onMenu}:{back:()=>void;onMenu?:()=>void}){"
+          if old not in s:
+              raise SystemExit('AffiliateDashboard component anchor not found')
+
+          old = "const [userId,setUserId]=useState<string|null>(null); const [links,setLinks]=useState<LinkMetric[]>([]); const [events,setEvents]=useState<Event[]>([]); const [range,setRange]=useState<Range>('Month'); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [copied,setCopied]=useState<string|null>(null); const [tab,setTab]=useState('Affiliate Dashboard');"
+          new = "const [userId,setUserId]=useState<string|null>(null); const [links,setLinks]=useState<LinkMetric[]>([]); const [events,setEvents]=useState<Event[]>([]); const [range,setRange]=useState<Range>('Month'); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [copied,setCopied]=useState<string|null>(null); const [tab,setTab]=useState('Affiliate Dashboard'); useEffect(()=>{const handler=(e:Event)=>{const tabName=(e as CustomEvent<string>).detail;if(typeof tabName==='string')setTab(tabName)};window.addEventListener('dright-affiliate-tab',handler);return()=>window.removeEventListener('dright-affiliate-tab',handler)},[]);"
+          if old not in s:
+              raise SystemExit('Affiliate tab state anchor not found')
+          s = s.replace(old,new,1)
+          p.write_text(s)
+
+      - name: Verify build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.tsx src/AffiliateDashboard.tsx
+          git diff --cached --quiet && echo "No changes needed" && exit 0
+          git commit -m "fix: wire affiliate profile navigation and merge settings"
+          git push origin main
