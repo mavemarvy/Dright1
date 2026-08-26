@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {ArrowLeft, BarChart3, Bell, Check, Copy, Link2, Menu, ShieldCheck, Users, Target, Trophy, BriefcaseBusiness, Megaphone, Wallet, Lock, UserPlus, Instagram, Youtube, Facebook, Linkedin, Send, X} from 'lucide-react';
+import {ArrowLeft, BarChart3, Bell, Check, Copy, Link2, Menu, ShieldCheck, Users, Target, Trophy, BriefcaseBusiness, Megaphone, Wallet, Lock, UserPlus, Globe2, Video, MessageCircle, Briefcase, Send, X} from 'lucide-react';
 import {supabase} from './supabase';
 import './affiliate-dashboard.css';
 import './sales-team.css';
