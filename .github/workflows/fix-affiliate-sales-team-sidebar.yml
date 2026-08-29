@@ -1,10 +1,11 @@
-name: Expose Affiliate Sales Team
+name: Wire Affiliate Sales Team navigation
 
 on:
   push:
     branches: [main]
     paths:
       - 'src/main.tsx'
+      - 'src/AffiliateDashboard.tsx'
       - '.github/workflows/fix-affiliate-sales-team-sidebar.yml'
   workflow_dispatch:
 
@@ -12,32 +13,85 @@ permissions:
   contents: write
 
 jobs:
-  fix-sidebar:
-    if: ${{ !contains(github.event.head_commit.message, '[affiliate-sidebar-fix]') || github.event_name == 'workflow_dispatch' }}
+  wire-sales-team:
+    if: ${{ !contains(github.event.head_commit.message, '[affiliate-sales-team-nav]') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add complete Affiliate profile sidebar
+      - name: Wire the real Sales Team destination
         run: |
           python - <<'PY'
           from pathlib import Path
+
           p = Path('src/main.tsx')
           s = p.read_text()
-          old = "<button onClick={onAffiliateDashboard}><BarChart3 size={18}/> Affiliate Dashboard</button><button onClick={onAffiliateAnalytics}><BarChart3 size={18}/> Affiliate Analytics</button><button><Link2 size={18}/> Affiliate Links</button><button><Wallet size={18}/> Earnings</button>"
-          new = "<button onClick={onAffiliateDashboard}><LayoutDashboard size={18}/> Affiliate Dashboard</button><button onClick={onAffiliateDashboard}><Link2 size={18}/> Affiliate Links</button><button onClick={onAffiliateDashboard}><ShoppingBag size={18}/> Products</button><button onClick={onAffiliateDashboard}><BarChart3 size={18}/> Sales</button><button onClick={onAffiliateDashboard}><Wallet size={18}/> Commissions</button><button onClick={onAffiliateAnalytics}><BarChart3 size={18}/> Analytics</button><button onClick={onAffiliateDashboard}><Users size={18}/> Sales Team</button><button onClick={onAffiliateDashboard}><Megaphone size={18}/> Promotions</button><button onClick={onAffiliateDashboard}><MessageCircle size={18}/> Messages</button><button><Settings size={18}/> Settings</button>"
-          if old not in s:
-              raise SystemExit('Affiliate sidebar anchor not found; no changes made.')
-          p.write_text(s.replace(old, new, 1))
+
+          if 'const [affiliateTab,setAffiliateTab]' not in s:
+              s = s.replace(
+                  "const [themeOpen,setThemeOpen]=useState(false); const [sidebarOpen,setSidebarOpen]=useState(false);",
+                  "const [themeOpen,setThemeOpen]=useState(false); const [sidebarOpen,setSidebarOpen]=useState(false); const [affiliateTab,setAffiliateTab]=useState<string>('Affiliate Dashboard');",
+                  1,
+              )
+
+          old_open = "const openAffiliate=()=>{setSidebarOpen(false);setPage('affiliate-dashboard')};"
+          new_open = "const openAffiliate=()=>{setSidebarOpen(false);setAffiliateTab('Affiliate Dashboard');setPage('affiliate-dashboard')}; const openAffiliateSalesTeam=()=>{setSidebarOpen(false);setAffiliateTab('Sales Team');setPage('affiliate-dashboard')};"
+          if old_open in s:
+              s = s.replace(old_open, new_open, 1)
+
+          s = s.replace(
+              "onAffiliateDashboard={openAffiliate} onSellerDashboard={openSeller}",
+              "onAffiliateDashboard={openAffiliate} onAffiliateSalesTeam={openAffiliateSalesTeam} onSellerDashboard={openSeller}",
+              1,
+          )
+
+          s = s.replace(
+              "<AffiliateDashboard back={()=>setPage('market')} onMenu={()=>setSidebarOpen(true)}/>",
+              "<AffiliateDashboard back={()=>setPage('market')} onMenu={()=>setSidebarOpen(true)} initialTab={affiliateTab}/>",
+              1,
+          )
+
+          old_sig = "function Sidebar({open,onClose,onWelcome,onMarket,onLearning,onAffiliateAnalytics,onAffiliateDashboard,onSellerDashboard,onSignOut,onAdmin}:{open:boolean;onClose:()=>void;onWelcome:()=>void;onMarket:()=>void;onLearning:()=>void;onAffiliateAnalytics:()=>void;onAffiliateDashboard:()=>void;onSellerDashboard:()=>void;onSignOut:()=>void;onAdmin?:()=>void})"
+          new_sig = "function Sidebar({open,onClose,onWelcome,onMarket,onLearning,onAffiliateAnalytics,onAffiliateDashboard,onAffiliateSalesTeam,onSellerDashboard,onSignOut,onAdmin}:{open:boolean;onClose:()=>void;onWelcome:()=>void;onMarket:()=>void;onLearning:()=>void;onAffiliateAnalytics:()=>void;onAffiliateDashboard:()=>void;onAffiliateSalesTeam:()=>void;onSellerDashboard:()=>void;onSignOut:()=>void;onAdmin?:()=>void})"
+          if old_sig in s:
+              s = s.replace(old_sig, new_sig, 1)
+
+          old_button = '<button onClick={onAffiliateDashboard}><Users size={18}/> Sales Team</button>'
+          new_button = '<button onClick={onAffiliateSalesTeam}><Users size={18}/> Sales Team</button>'
+          if old_button in s:
+              s = s.replace(old_button, new_button, 1)
+
+          p.write_text(s)
+
+          p = Path('src/AffiliateDashboard.tsx')
+          s = p.read_text()
+          s = s.replace(
+              "export default function AffiliateDashboard({back,onMenu}:{back:()=>void;onMenu?:()=>void}){",
+              "export default function AffiliateDashboard({back,onMenu,initialTab}:{back:()=>void;onMenu?:()=>void;initialTab?:string}){",
+              1,
+          )
+          s = s.replace(
+              "const [userId,setUserId]=useState<string|null>(null); const [links,setLinks]=useState<LinkMetric[]>([]); const [events,setEvents]=useState<Event[]>([]); const [range,setRange]=useState<Range>('Month'); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [copied,setCopied]=useState<string|null>(null); const [tab,setTab]=useState('Affiliate Dashboard');",
+              "const [userId,setUserId]=useState<string|null>(null); const [links,setLinks]=useState<LinkMetric[]>([]); const [events,setEvents]=useState<Event[]>([]); const [range,setRange]=useState<Range>('Month'); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [copied,setCopied]=useState<string|null>(null); const [tab,setTab]=useState(initialTab||'Affiliate Dashboard');",
+              1,
+          )
+          s = s.replace(
+              "useEffect(()=>{let live=true;(async()=>{const {data:{user}}=await supabase.auth.getUser();",
+              "useEffect(()=>{if(initialTab)setTab(initialTab)},[initialTab]);\n useEffect(()=>{let live=true;(async()=>{const {data:{user}}=await supabase.auth.getUser();",
+              1,
+          )
+          p.write_text(s)
           PY
       - name: Verify
         run: |
-          grep -q 'Sales Team' src/main.tsx
-          grep -q 'Affiliate Dashboard' src/main.tsx
+          grep -q 'onAffiliateSalesTeam' src/main.tsx
+          grep -q 'onClick={onAffiliateSalesTeam}' src/main.tsx
+          grep -q 'initialTab={affiliateTab}' src/main.tsx
+          grep -q 'initialTab?:string' src/AffiliateDashboard.tsx
           git diff --check
-      - name: Commit
+      - name: Commit wiring changes
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/main.tsx
-          git commit -m 'fix: expose Sales Team in affiliate profile sidebar [affiliate-sidebar-fix]'
+          git add src/main.tsx src/AffiliateDashboard.tsx
+          git commit -m 'fix: wire Affiliate Sales Team button [affiliate-sales-team-nav]'
           git push
