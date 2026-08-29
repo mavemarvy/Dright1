@@ -1,0 +1,88 @@
+import React,{useCallback,useEffect,useMemo,useState} from 'react';
+import {Activity,AlertTriangle,BarChart3,BriefcaseBusiness,ChevronRight,DollarSign,ExternalLink,Filter,Layers,MousePointerClick,RefreshCw,Search,ShieldCheck,ShoppingBag,Users,WalletCards} from 'lucide-react';
+import {supabase} from './supabase';
+import './promotion-control-center.css';
+
+type Tab='overview'|'campaigns'|'analytics'|'affiliates'|'fraud'|'configuration'|'audit';
+type Range=1|7|28|30|90;
+type Campaign={campaign_id:string;owner_id:string;owner_name:string;asset_id:string|null;asset_public_id:string|null;asset_name:string;asset_type:string;status:string;currency:string;spend:number;impressions:number;reach:number;clicks:number;ctr:number;conversions:number;conversion_rate:number;revenue:number;roas:number;starts_at:string|null;ends_at:string|null;created_at:string};
+type Affiliate={affiliate_id:string;user_id:string;affiliate_name:string;clicks:number;unique_clicks:number;orders:number;revenue:number;commission:number;reversed_commissions:number;refund_related_orders:number};
+type State={overview:Record<string,any>;campaigns:Campaign[];affiliates:Affiliate[];fraud:any[];config:Record<string,any>;generated_at:string};
+const num=(v:any)=>new Intl.NumberFormat('en-US').format(Number(v)||0);
+const money=(v:any,c='USD')=>new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:2}).format(Number(v)||0);
+const percent=(v:any)=>`${Number(v||0).toFixed(2)}%`;
+const date=(v:any)=>v?new Date(v).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'—';
+
+export default function PromotionControlCenter(){
+ const [tab,setTab]=useState<Tab>('overview');
+ const [range,setRange]=useState<Range>(30);
+ const [state,setState]=useState<State|null>(null);
+ const [loading,setLoading]=useState(true);
+ const [error,setError]=useState('');
+ const [search,setSearch]=useState('');
+ const [searching,setSearching]=useState(false);
+ const [searchResults,setSearchResults]=useState<any[]>([]);
+ const [selectedCampaign,setSelectedCampaign]=useState<Campaign|null>(null);
+ const [selectedAffiliate,setSelectedAffiliate]=useState<Affiliate|null>(null);
+
+ const load=useCallback(async()=>{
+  setLoading(true);setError('');
+  const end=new Date();const start=new Date(end);start.setDate(start.getDate()-range);
+  const {data,error}=await supabase.rpc('admin_promotion_control_center',{p_start:start.toISOString(),p_end:end.toISOString()});
+  if(error){setError(error.message);setState(null)}else setState(data as State);
+  setLoading(false);
+ },[range]);
+ useEffect(()=>{load()},[load]);
+
+ const searchIds=async()=>{
+  const q=search.trim();if(!q)return;
+  setSearching(true);setSearchResults([]);setError('');
+  const {data,error}=await supabase.rpc('admin_universal_id_search_current',{p_public_id:q});
+  if(error)setError(error.message);else setSearchResults(data||[]);
+  setSearching(false);
+ };
+ const overview=state?.overview||{};
+ const totals=useMemo(()=>({campaigns:state?.campaigns?.length||0,affiliates:state?.affiliates?.length||0}),[state]);
+ return <section className="pcc">
+  <header className="pcc-header">
+   <div><div className="pcc-eyebrow">DRIGHT SUPER ADMIN</div><h1>Promotion Control Center</h1><p>Operational promotion and affiliate intelligence backed by Supabase records. No fabricated analytics.</p></div>
+   <button className="pcc-refresh" onClick={load} disabled={loading}><RefreshCw size={17} className={loading?'spin':''}/> Refresh</button>
+  </header>
+  <div className="pcc-id-search"><Search size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&searchIds()} placeholder="Universal ID: CAM-, PROM-, AFF-, LINK-, ORD-, TXN-, CONTRACT-…"/><button onClick={searchIds} disabled={searching||!search.trim()}>{searching?'Searching…':'Search'}</button></div>
+  {searchResults.length>0&&<div className="pcc-search-results">{searchResults.map((r:any,i)=><button key={`${r.entity_type}-${r.entity_id}-${i}`} onClick={()=>setSearchResults([])}><span><strong>{r.public_id}</strong><small>{r.entity_type}</small></span><ChevronRight size={16}/></button>)}</div>}
+  <div className="pcc-tabs">{(['overview','campaigns','analytics','affiliates','fraud','configuration','audit'] as Tab[]).map(x=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}>{x==='overview'?'Overview':x==='campaigns'?'Campaigns':x==='analytics'?'Analytics':x==='affiliates'?'Affiliate Intelligence':x==='fraud'?'Fraud & Risk':x==='configuration'?'Configuration':'Audit History'}</button>)}</div>
+  {error&&<div className="pcc-error"><AlertTriangle size={18}/><span>{error}</span><button onClick={load}>Retry</button></div>}
+  {loading?<div className="pcc-loading">Loading authorized promotion intelligence…</div>:state&&<>
+   {tab==='overview'&&<Overview overview={overview} campaigns={state.campaigns} affiliates={state.affiliates} onCampaign={setSelectedCampaign} onAffiliate={setSelectedAffiliate}/>} 
+   {tab==='campaigns'&&<Campaigns campaigns={state.campaigns} onSelect={setSelectedCampaign}/>} 
+   {tab==='analytics'&&<Analytics overview={overview} campaigns={state.campaigns}/>} 
+   {tab==='affiliates'&&<Affiliates affiliates={state.affiliates} onSelect={setSelectedAffiliate}/>} 
+   {tab==='fraud'&&<Fraud items={state.fraud}/>} 
+   {tab==='configuration'&&<Configuration config={state.config}/>} 
+   {tab==='audit'&&<AuditPlaceholder/>}
+  </>}
+  {selectedCampaign&&<CampaignDrawer campaign={selectedCampaign} close={()=>setSelectedCampaign(null)}/>} 
+  {selectedAffiliate&&<AffiliateDrawer affiliate={selectedAffiliate} close={()=>setSelectedAffiliate(null)} range={range}/>} 
+ </section>
+}
+
+function Overview({overview,campaigns,affiliates,onCampaign,onAffiliate}:{overview:Record<string,any>;campaigns:Campaign[];affiliates:Affiliate[];onCampaign:(x:Campaign)=>void;onAffiliate:(x:Affiliate)=>void}){
+ const cards=[['Campaigns',num(overview.total_campaigns),Layers],['Active',num(overview.active_campaigns),Activity],['Spend',money(overview.spend),DollarSign],['Impressions',num(overview.impressions),BarChart3],['Reach',num(overview.reach),Users],['Clicks',num(overview.clicks),MousePointerClick],['Conversions',num(overview.conversions),ShieldCheck],['Revenue',money(overview.revenue),WalletCards],['ROAS',overview.spend?`${(Number(overview.revenue)/Number(overview.spend)).toFixed(2)}x`:'0x',TrendingIcon],['Refunds',money(overview.refunds),AlertTriangle],['Fraud reviews',num(overview.fraud_reviews),AlertTriangle]] as const;
+ return <><div className="pcc-kpis">{cards.map(([label,value,Icon])=><div className="pcc-kpi" key={label}><span><Icon size={18}/></span><small>{label}</small><strong>{value}</strong></div>)}</div><div className="pcc-two"><div className="pcc-card"><CardTitle title="Campaign portfolio" icon={<Layers size={18}/>}/><div className="pcc-mini-grid"><Mini label="Pending" value={num(overview.pending_campaigns)}/><Mini label="Completed" value={num(overview.completed_campaigns)}/><Mini label="Paused" value={num(overview.paused_campaigns)}/><Mini label="Cancelled" value={num(overview.cancelled_campaigns)}/></div></div><div className="pcc-card"><CardTitle title="Data integrity" icon={<ShieldCheck size={18}/>}/><p className="pcc-note">Analytics shown here are read from the existing promotion, affiliate, order, commission and fraud records. Unsupported time-series dimensions are not manufactured.</p></div></div><div className="pcc-two"><div className="pcc-card"><CardTitle title="Recent campaigns" icon={<BriefcaseBusiness size={18}/>}/><Table rows={campaigns.slice(0,8)} onCampaign={onCampaign}/></div><div className="pcc-card"><CardTitle title="Affiliate intelligence" icon={<Users size={18}/>}/><AffiliateTable rows={affiliates.slice(0,8)} onAffiliate={onAffiliate}/></div></div></>
+}
+function Campaigns({campaigns,onSelect}:{campaigns:Campaign[];onSelect:(x:Campaign)=>void}){const [q,setQ]=useState('');const filtered=campaigns.filter(x=>`${x.campaign_id} ${x.owner_name} ${x.asset_name} ${x.asset_public_id||''} ${x.status}`.toLowerCase().includes(q.toLowerCase()));return <div className="pcc-card"><div className="pcc-toolbar"><div><CardTitle title="Campaign management" icon={<Layers size={18}/>}/><p>Existing DRIGHT promotion records only.</p></div><div className="pcc-inline-search"><Search size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search campaigns…"/></div></div><Table rows={filtered} onCampaign={onSelect}/></div>}
+function Analytics({overview,campaigns}:{overview:Record<string,any>;campaigns:Campaign[]}){const statuses=campaigns.reduce<Record<string,number>>((a,c)=>(a[c.status]=(a[c.status]||0)+1,a),{});return <><div className="pcc-card"><CardTitle title="Recorded promotion analytics" icon={<BarChart3 size={18}/>}/><div className="pcc-chart-grid"><ChartBar label="Impressions" value={Number(overview.impressions)||0}/><ChartBar label="Reach" value={Number(overview.reach)||0}/><ChartBar label="Clicks" value={Number(overview.clicks)||0}/><ChartBar label="Conversions" value={Number(overview.conversions)||0}/><ChartBar label="Revenue" value={Number(overview.revenue)||0} money/></div><p className="pcc-note">These are aggregate recorded campaign values. The current schema does not contain a dedicated promotion-event timeline, so the control center does not invent hourly/daily impression or click series.</p></div><div className="pcc-card"><CardTitle title="Campaign activity" icon={<Activity size={18}/>}/><div className="pcc-status-grid">{Object.entries(statuses).map(([k,v])=><Mini key={k} label={k} value={num(v)}/>)}</div></div></>}
+function Affiliates({affiliates,onSelect}:{affiliates:Affiliate[];onSelect:(x:Affiliate)=>void}){return <div className="pcc-card"><CardTitle title="Affiliate Intelligence" icon={<Users size={18}/>}/><AffiliateTable rows={affiliates} onAffiliate={onSelect}/></div>}
+function Fraud({items}:{items:any[]}){return <div className="pcc-card"><CardTitle title="Fraud & Risk" icon={<AlertTriangle size={18}/>}/><p className="pcc-note">Signals are evidence for review, not automatic proof of fraud.</p>{items.length===0?<Empty text="No fraud/risk signals for this period."/>:<div className="pcc-risk-list">{items.map((x,i)=><div key={`${x.public_id}-${i}`}><span className="risk-badge">{x.status}</span><strong>{x.public_id}</strong><small>{x.signal_type} · {date(x.detected_at)} · risk {x.risk_score??0}</small></div>)}</div>}</div>}
+function Configuration({config}:{config:Record<string,any>}){const entries=Object.entries(config);return <div className="pcc-card"><CardTitle title="Promotion configuration" icon={<Filter size={18}/>}/>{entries.length===0?<Empty text="No promotion-specific configuration is currently stored in admin_settings. The UI will not invent pricing, packages or fees."/>:<div className="pcc-config-list">{entries.map(([k,v])=><div key={k}><strong>{k}</strong><code>{JSON.stringify(v,null,2)}</code></div>)}</div>}<p className="pcc-note">Authoritative pricing changes should continue through the existing admin configuration and audit architecture; this view does not create a parallel pricing system.</p></div>}
+function AuditPlaceholder(){return <div className="pcc-card"><CardTitle title="Audit History" icon={<ShieldCheck size={18}/>}/><p className="pcc-note">Promotion actions are expected to use the existing admin audit infrastructure. This control-center tab is intentionally read-only until an existing audit query is wired here; no fake history is displayed.</p><Empty text="No dedicated promotion audit query is exposed by the current frontend contract."/></div>}
+function Table({rows,onCampaign}:{rows:Campaign[];onCampaign:(x:Campaign)=>void}){if(!rows.length)return <Empty text="No campaign records for this period."/>;return <div className="pcc-scroll"><table className="pcc-table"><thead><tr><th>Campaign</th><th>Owner</th><th>Asset</th><th>Status</th><th>Spend</th><th>Clicks</th><th>Conv.</th><th>Revenue</th><th>ROAS</th></tr></thead><tbody>{rows.map(x=><tr key={x.campaign_id} onClick={()=>onCampaign(x)}><td><strong>{x.campaign_id}</strong><small>{date(x.created_at)}</small></td><td>{x.owner_name}</td><td>{x.asset_public_id||'—'}<small>{x.asset_name}</small></td><td><span className="status-badge">{x.status}</span></td><td>{money(x.spend,x.currency)}</td><td>{num(x.clicks)}</td><td>{num(x.conversions)}</td><td>{money(x.revenue,x.currency)}</td><td>{Number(x.roas||0).toFixed(2)}x</td></tr>)}</tbody></table></div>}
+function AffiliateTable({rows,onAffiliate}:{rows:Affiliate[];onAffiliate:(x:Affiliate)=>void}){if(!rows.length)return <Empty text="No affiliate records for this period."/>;return <div className="pcc-scroll"><table className="pcc-table"><thead><tr><th>Affiliate</th><th>Clicks</th><th>Unique</th><th>Orders</th><th>Revenue</th><th>Commission</th><th>Reversed</th></tr></thead><tbody>{rows.map(x=><tr key={x.affiliate_id} onClick={()=>onAffiliate(x)}><td><strong>{x.affiliate_id}</strong><small>{x.affiliate_name}</small></td><td>{num(x.clicks)}</td><td>{num(x.unique_clicks)}</td><td>{num(x.orders)}</td><td>{money(x.revenue)}</td><td>{money(x.commission)}</td><td>{num(x.reversed_commissions)}</td></tr>)}</tbody></table></div>}
+function CampaignDrawer({campaign,close}:{campaign:Campaign;close:()=>void}){return <Drawer title="Campaign intelligence" close={close}><div className="pcc-drawer-id">{campaign.campaign_id}<ExternalLink size={15}/></div><div className="pcc-detail-grid"><Mini label="Owner" value={campaign.owner_name}/><Mini label="Asset" value={campaign.asset_public_id||'—'}/><Mini label="Status" value={campaign.status}/><Mini label="Spend" value={money(campaign.spend,campaign.currency)}/><Mini label="Impressions" value={num(campaign.impressions)}/><Mini label="Reach" value={num(campaign.reach)}/><Mini label="Clicks" value={num(campaign.clicks)}/><Mini label="CTR" value={percent(campaign.ctr)}/><Mini label="Conversions" value={num(campaign.conversions)}/><Mini label="Revenue" value={money(campaign.revenue,campaign.currency)}/><Mini label="ROAS" value={`${Number(campaign.roas||0).toFixed(2)}x`}/><Mini label="Ends" value={date(campaign.ends_at)}/></div></Drawer>}
+function AffiliateDrawer({affiliate,close,range}:{affiliate:Affiliate;close:()=>void;range:number}){const [series,setSeries]=useState<any[]>([]);useEffect(()=>{const end=new Date();const start=new Date(end);start.setDate(start.getDate()-range);supabase.rpc('affiliate_analytics',{p_affiliate_user_id:affiliate.user_id,p_from:start.toISOString(),p_to:end.toISOString()}).then(({data})=>setSeries(data||[]))},[affiliate.user_id,range]);return <Drawer title="Affiliate intelligence" close={close}><div className="pcc-drawer-id">{affiliate.affiliate_id}</div><div className="pcc-detail-grid"><Mini label="Affiliate" value={affiliate.affiliate_name}/><Mini label="Clicks" value={num(affiliate.clicks)}/><Mini label="Unique clicks" value={num(affiliate.unique_clicks)}/><Mini label="Orders" value={num(affiliate.orders)}/><Mini label="Revenue" value={money(affiliate.revenue)}/><Mini label="Commission" value={money(affiliate.commission)}/><Mini label="Refund-related" value={num(affiliate.refund_related_orders)}/><Mini label="Reversed commission" value={num(affiliate.reversed_commissions)}/></div><div className="pcc-card pcc-inner"><CardTitle title="Recorded click trend" icon={<MousePointerClick size={18}/>}/>{series.length?<div className="pcc-series">{series.map((x:any)=><div key={x.period} style={{height:`${Math.max(4,Math.min(100,(Number(x.clicks)||0)/(Math.max(1,...series.map((s:any)=>Number(s.clicks)||0)))*100))}%`}} title={`${date(x.period)} · ${num(x.clicks)} clicks`}/>)}</div>:<Empty text="No affiliate click events for this period."/>}</div></Drawer>}
+function Drawer({title,close,children}:{title:string;close:()=>void;children:React.ReactNode}){return <div className="pcc-overlay" onClick={close}><aside className="pcc-drawer" onClick={e=>e.stopPropagation()}><div className="pcc-drawer-head"><h3>{title}</h3><button onClick={close}>×</button></div>{children}</aside></div>}
+function CardTitle({title,icon}:{title:string;icon:React.ReactNode}){return <div className="pcc-card-title"><span>{icon}</span><div><h3>{title}</h3></div></div>}
+function Mini({label,value}:{label:string;value:any}){return <div className="pcc-mini"><small>{label}</small><strong>{value}</strong></div>}
+function ChartBar({label,value,money:cash=false}:{label:string;value:number;money?:boolean}){return <div className="pcc-chart-item"><div><span>{label}</span><strong>{cash?money(value):num(value)}</strong></div><div className="pcc-chart-track"><i style={{width:`${Math.max(2,Math.min(100,value?Math.log10(Math.abs(value)+1)/12*100:2))}%`}}/></div></div>}
+function TrendingIcon(){return Activity}
+function Empty({text}:{text:string}){return <div className="pcc-empty">{text}</div>}
