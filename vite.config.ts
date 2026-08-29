@@ -8,6 +8,7 @@ export default defineConfig({
       input: {
         main: 'index.html',
         seller: 'seller.html',
+        'seller-profile': 'seller-profile.html',
       },
     },
   },
