@@ -9,6 +9,8 @@ export default defineConfig({
         main: 'index.html',
         seller: 'seller.html',
         'seller-profile': 'seller-profile.html',
+        'seller-products': 'seller-products.html',
+        employer: 'employer.html',
       },
     },
   },
