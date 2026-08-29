@@ -1,5 +1,5 @@
 import React,{useCallback,useEffect,useMemo,useState} from 'react';
-import {Activity,AlertTriangle,BarChart3,BriefcaseBusiness,ChevronRight,DollarSign,ExternalLink,Filter,Layers,MousePointerClick,RefreshCw,Search,ShieldCheck,ShoppingBag,Users,WalletCards} from 'lucide-react';
+import {Activity,AlertTriangle,BarChart3,BriefcaseBusiness,ChevronRight,DollarSign,ExternalLink,Filter,Layers,MousePointerClick,RefreshCw,Search,ShieldCheck,Users,WalletCards} from 'lucide-react';
 import {supabase} from './supabase';
 import './promotion-control-center.css';
 
@@ -24,52 +24,19 @@ export default function PromotionControlCenter(){
  const [searchResults,setSearchResults]=useState<any[]>([]);
  const [selectedCampaign,setSelectedCampaign]=useState<Campaign|null>(null);
  const [selectedAffiliate,setSelectedAffiliate]=useState<Affiliate|null>(null);
-
- const load=useCallback(async()=>{
-  setLoading(true);setError('');
-  const end=new Date();const start=new Date(end);start.setDate(start.getDate()-range);
-  const {data,error}=await supabase.rpc('admin_promotion_control_center',{p_start:start.toISOString(),p_end:end.toISOString()});
-  if(error){setError(error.message);setState(null)}else setState(data as State);
-  setLoading(false);
- },[range]);
+ const load=useCallback(async()=>{setLoading(true);setError('');const end=new Date();const start=new Date(end);start.setDate(start.getDate()-range);const {data,error}=await supabase.rpc('admin_promotion_control_center',{p_start:start.toISOString(),p_end:end.toISOString()});if(error){setError(error.message);setState(null)}else setState(data as State);setLoading(false)},[range]);
  useEffect(()=>{load()},[load]);
-
- const searchIds=async()=>{
-  const q=search.trim();if(!q)return;
-  setSearching(true);setSearchResults([]);setError('');
-  const {data,error}=await supabase.rpc('admin_universal_id_search_current',{p_public_id:q});
-  if(error)setError(error.message);else setSearchResults(data||[]);
-  setSearching(false);
- };
+ const searchIds=async()=>{const q=search.trim();if(!q)return;setSearching(true);setSearchResults([]);setError('');const {data,error}=await supabase.rpc('admin_universal_id_search_current',{p_public_id:q});if(error)setError(error.message);else setSearchResults(data||[]);setSearching(false)};
  const overview=state?.overview||{};
- const totals=useMemo(()=>({campaigns:state?.campaigns?.length||0,affiliates:state?.affiliates?.length||0}),[state]);
- return <section className="pcc">
-  <header className="pcc-header">
-   <div><div className="pcc-eyebrow">DRIGHT SUPER ADMIN</div><h1>Promotion Control Center</h1><p>Operational promotion and affiliate intelligence backed by Supabase records. No fabricated analytics.</p></div>
-   <button className="pcc-refresh" onClick={load} disabled={loading}><RefreshCw size={17} className={loading?'spin':''}/> Refresh</button>
-  </header>
+ return <section className="pcc"><header className="pcc-header"><div><div className="pcc-eyebrow">DRIGHT SUPER ADMIN</div><h1>Promotion Control Center</h1><p>Operational promotion and affiliate intelligence backed by Supabase records. No fabricated analytics.</p></div><button className="pcc-refresh" onClick={load} disabled={loading}><RefreshCw size={17} className={loading?'spin':''}/> Refresh</button></header>
   <div className="pcc-id-search"><Search size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&searchIds()} placeholder="Universal ID: CAM-, PROM-, AFF-, LINK-, ORD-, TXN-, CONTRACT-…"/><button onClick={searchIds} disabled={searching||!search.trim()}>{searching?'Searching…':'Search'}</button></div>
   {searchResults.length>0&&<div className="pcc-search-results">{searchResults.map((r:any,i)=><button key={`${r.entity_type}-${r.entity_id}-${i}`} onClick={()=>setSearchResults([])}><span><strong>{r.public_id}</strong><small>{r.entity_type}</small></span><ChevronRight size={16}/></button>)}</div>}
   <div className="pcc-tabs">{(['overview','campaigns','analytics','affiliates','fraud','configuration','audit'] as Tab[]).map(x=><button key={x} className={tab===x?'active':''} onClick={()=>setTab(x)}>{x==='overview'?'Overview':x==='campaigns'?'Campaigns':x==='analytics'?'Analytics':x==='affiliates'?'Affiliate Intelligence':x==='fraud'?'Fraud & Risk':x==='configuration'?'Configuration':'Audit History'}</button>)}</div>
   {error&&<div className="pcc-error"><AlertTriangle size={18}/><span>{error}</span><button onClick={load}>Retry</button></div>}
-  {loading?<div className="pcc-loading">Loading authorized promotion intelligence…</div>:state&&<>
-   {tab==='overview'&&<Overview overview={overview} campaigns={state.campaigns} affiliates={state.affiliates} onCampaign={setSelectedCampaign} onAffiliate={setSelectedAffiliate}/>} 
-   {tab==='campaigns'&&<Campaigns campaigns={state.campaigns} onSelect={setSelectedCampaign}/>} 
-   {tab==='analytics'&&<Analytics overview={overview} campaigns={state.campaigns}/>} 
-   {tab==='affiliates'&&<Affiliates affiliates={state.affiliates} onSelect={setSelectedAffiliate}/>} 
-   {tab==='fraud'&&<Fraud items={state.fraud}/>} 
-   {tab==='configuration'&&<Configuration config={state.config}/>} 
-   {tab==='audit'&&<AuditPlaceholder/>}
-  </>}
-  {selectedCampaign&&<CampaignDrawer campaign={selectedCampaign} close={()=>setSelectedCampaign(null)}/>} 
-  {selectedAffiliate&&<AffiliateDrawer affiliate={selectedAffiliate} close={()=>setSelectedAffiliate(null)} range={range}/>} 
- </section>
+  {loading?<div className="pcc-loading">Loading authorized promotion intelligence…</div>:state&&<>{tab==='overview'&&<Overview overview={overview} campaigns={state.campaigns} affiliates={state.affiliates} onCampaign={setSelectedCampaign} onAffiliate={setSelectedAffiliate}/>} {tab==='campaigns'&&<Campaigns campaigns={state.campaigns} onSelect={setSelectedCampaign}/>} {tab==='analytics'&&<Analytics overview={overview} campaigns={state.campaigns}/>} {tab==='affiliates'&&<Affiliates affiliates={state.affiliates} onSelect={setSelectedAffiliate}/>} {tab==='fraud'&&<Fraud items={state.fraud}/>} {tab==='configuration'&&<Configuration config={state.config}/>} {tab==='audit'&&<AuditPlaceholder/>}</>}
+  {selectedCampaign&&<CampaignDrawer campaign={selectedCampaign} close={()=>setSelectedCampaign(null)}/>} {selectedAffiliate&&<AffiliateDrawer affiliate={selectedAffiliate} close={()=>setSelectedAffiliate(null)} range={range}/>}</section>;
 }
-
-function Overview({overview,campaigns,affiliates,onCampaign,onAffiliate}:{overview:Record<string,any>;campaigns:Campaign[];affiliates:Affiliate[];onCampaign:(x:Campaign)=>void;onAffiliate:(x:Affiliate)=>void}){
- const cards=[['Campaigns',num(overview.total_campaigns),Layers],['Active',num(overview.active_campaigns),Activity],['Spend',money(overview.spend),DollarSign],['Impressions',num(overview.impressions),BarChart3],['Reach',num(overview.reach),Users],['Clicks',num(overview.clicks),MousePointerClick],['Conversions',num(overview.conversions),ShieldCheck],['Revenue',money(overview.revenue),WalletCards],['ROAS',overview.spend?`${(Number(overview.revenue)/Number(overview.spend)).toFixed(2)}x`:'0x',TrendingIcon],['Refunds',money(overview.refunds),AlertTriangle],['Fraud reviews',num(overview.fraud_reviews),AlertTriangle]] as const;
- return <><div className="pcc-kpis">{cards.map(([label,value,Icon])=><div className="pcc-kpi" key={label}><span><Icon size={18}/></span><small>{label}</small><strong>{value}</strong></div>)}</div><div className="pcc-two"><div className="pcc-card"><CardTitle title="Campaign portfolio" icon={<Layers size={18}/>}/><div className="pcc-mini-grid"><Mini label="Pending" value={num(overview.pending_campaigns)}/><Mini label="Completed" value={num(overview.completed_campaigns)}/><Mini label="Paused" value={num(overview.paused_campaigns)}/><Mini label="Cancelled" value={num(overview.cancelled_campaigns)}/></div></div><div className="pcc-card"><CardTitle title="Data integrity" icon={<ShieldCheck size={18}/>}/><p className="pcc-note">Analytics shown here are read from the existing promotion, affiliate, order, commission and fraud records. Unsupported time-series dimensions are not manufactured.</p></div></div><div className="pcc-two"><div className="pcc-card"><CardTitle title="Recent campaigns" icon={<BriefcaseBusiness size={18}/>}/><Table rows={campaigns.slice(0,8)} onCampaign={onCampaign}/></div><div className="pcc-card"><CardTitle title="Affiliate intelligence" icon={<Users size={18}/>}/><AffiliateTable rows={affiliates.slice(0,8)} onAffiliate={onAffiliate}/></div></div></>
-}
+function Overview({overview,campaigns,affiliates,onCampaign,onAffiliate}:{overview:Record<string,any>;campaigns:Campaign[];affiliates:Affiliate[];onCampaign:(x:Campaign)=>void;onAffiliate:(x:Affiliate)=>void}){const cards=[['Campaigns',num(overview.total_campaigns),Layers],['Active',num(overview.active_campaigns),Activity],['Spend',money(overview.spend),DollarSign],['Impressions',num(overview.impressions),BarChart3],['Reach',num(overview.reach),Users],['Clicks',num(overview.clicks),MousePointerClick],['Conversions',num(overview.conversions),ShieldCheck],['Revenue',money(overview.revenue),WalletCards],['ROAS',overview.spend?`${(Number(overview.revenue)/Number(overview.spend)).toFixed(2)}x`:'0x',Activity],['Refunds',money(overview.refunds),AlertTriangle],['Fraud reviews',num(overview.fraud_reviews),AlertTriangle]] as const;return <><div className="pcc-kpis">{cards.map(([label,value,Icon])=><div className="pcc-kpi" key={label}><span><Icon size={18}/></span><small>{label}</small><strong>{value}</strong></div>)}</div><div className="pcc-two"><div className="pcc-card"><CardTitle title="Campaign portfolio" icon={<Layers size={18}/>}/><div className="pcc-mini-grid"><Mini label="Pending" value={num(overview.pending_campaigns)}/><Mini label="Completed" value={num(overview.completed_campaigns)}/><Mini label="Paused" value={num(overview.paused_campaigns)}/><Mini label="Cancelled" value={num(overview.cancelled_campaigns)}/></div></div><div className="pcc-card"><CardTitle title="Data integrity" icon={<ShieldCheck size={18}/>}/><p className="pcc-note">Analytics shown here are read from the existing promotion, affiliate, order, commission and fraud records. Unsupported time-series dimensions are not manufactured.</p></div></div><div className="pcc-two"><div className="pcc-card"><CardTitle title="Recent campaigns" icon={<BriefcaseBusiness size={18}/>}/><Table rows={campaigns.slice(0,8)} onCampaign={onCampaign}/></div><div className="pcc-card"><CardTitle title="Affiliate intelligence" icon={<Users size={18}/>}/><AffiliateTable rows={affiliates.slice(0,8)} onAffiliate={onAffiliate}/></div></div></>}
 function Campaigns({campaigns,onSelect}:{campaigns:Campaign[];onSelect:(x:Campaign)=>void}){const [q,setQ]=useState('');const filtered=campaigns.filter(x=>`${x.campaign_id} ${x.owner_name} ${x.asset_name} ${x.asset_public_id||''} ${x.status}`.toLowerCase().includes(q.toLowerCase()));return <div className="pcc-card"><div className="pcc-toolbar"><div><CardTitle title="Campaign management" icon={<Layers size={18}/>}/><p>Existing DRIGHT promotion records only.</p></div><div className="pcc-inline-search"><Search size={16}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search campaigns…"/></div></div><Table rows={filtered} onCampaign={onSelect}/></div>}
 function Analytics({overview,campaigns}:{overview:Record<string,any>;campaigns:Campaign[]}){const statuses=campaigns.reduce<Record<string,number>>((a,c)=>(a[c.status]=(a[c.status]||0)+1,a),{});return <><div className="pcc-card"><CardTitle title="Recorded promotion analytics" icon={<BarChart3 size={18}/>}/><div className="pcc-chart-grid"><ChartBar label="Impressions" value={Number(overview.impressions)||0}/><ChartBar label="Reach" value={Number(overview.reach)||0}/><ChartBar label="Clicks" value={Number(overview.clicks)||0}/><ChartBar label="Conversions" value={Number(overview.conversions)||0}/><ChartBar label="Revenue" value={Number(overview.revenue)||0} money/></div><p className="pcc-note">These are aggregate recorded campaign values. The current schema does not contain a dedicated promotion-event timeline, so the control center does not invent hourly/daily impression or click series.</p></div><div className="pcc-card"><CardTitle title="Campaign activity" icon={<Activity size={18}/>}/><div className="pcc-status-grid">{Object.entries(statuses).map(([k,v])=><Mini key={k} label={k} value={num(v)}/>)}</div></div></>}
 function Affiliates({affiliates,onSelect}:{affiliates:Affiliate[];onSelect:(x:Affiliate)=>void}){return <div className="pcc-card"><CardTitle title="Affiliate Intelligence" icon={<Users size={18}/>}/><AffiliateTable rows={affiliates} onAffiliate={onSelect}/></div>}
@@ -84,5 +51,4 @@ function Drawer({title,close,children}:{title:string;close:()=>void;children:Rea
 function CardTitle({title,icon}:{title:string;icon:React.ReactNode}){return <div className="pcc-card-title"><span>{icon}</span><div><h3>{title}</h3></div></div>}
 function Mini({label,value}:{label:string;value:any}){return <div className="pcc-mini"><small>{label}</small><strong>{value}</strong></div>}
 function ChartBar({label,value,money:cash=false}:{label:string;value:number;money?:boolean}){return <div className="pcc-chart-item"><div><span>{label}</span><strong>{cash?money(value):num(value)}</strong></div><div className="pcc-chart-track"><i style={{width:`${Math.max(2,Math.min(100,value?Math.log10(Math.abs(value)+1)/12*100:2))}%`}}/></div></div>}
-function TrendingIcon(){return Activity}
 function Empty({text}:{text:string}){return <div className="pcc-empty">{text}</div>}
