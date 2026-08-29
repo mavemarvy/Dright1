@@ -1,5 +1,32 @@
 import React,{useState} from 'react';
-import {LayoutDashboard,Users,Megaphone,ShieldCheck,Settings,FileText,LifeBuoy,ScrollText,ArrowLeft,TrendingUp,Target} from 'lucide-react';
+import {LayoutDashboard,Users,Megaphone,ShieldCheck,Settings,FileText,LifeBuoy,ScrollText,ArrowLeft,TrendingUp,Target,Menu,X,ChevronLeft,ChevronRight} from 'lucide-react';
 import AdminSalesTeamIntelligence from './AdminSalesTeamIntelligence';
 import PromotionControlCenter from './PromotionControlCenter';
-export default function AdminPanel({onBack}:{onBack:()=>void}){const [view,setView]=useState('Overview');const items=[['Overview',LayoutDashboard],['Users',Users],['Promotion Control Center',Target],['Sales Team Intelligence',TrendingUp],['Announcements',Megaphone],['Moderation',ShieldCheck],['Settings',Settings],['Audit Logs',ScrollText],['Support',LifeBuoy],['Content',FileText]] as const;return <div className="admin-panel-page"><aside className="admin-panel-sidebar"><div className="admin-brand"><div className="admin-brand-mark">D</div><div><strong>DRIGHT</strong><small>Administrator</small></div></div><nav>{items.map(([label,Icon])=><button key={label} className={view===label?'active':''} onClick={()=>setView(label)}><Icon size={18}/><span>{label}</span></button>)}</nav><button className="admin-back" onClick={onBack}><ArrowLeft size={17}/> Back to DRIGHT</button></aside><main className="admin-panel-main">{view==='Sales Team Intelligence'?<AdminSalesTeamIntelligence/>:view==='Promotion Control Center'?<PromotionControlCenter/>:<><header><div><span className="admin-eyebrow">DRIGHT ADMINISTRATOR</span><h1>Admin Panel</h1><p>Manage the DRIGHT platform, users, content, moderation and support.</p></div></header><section className="admin-cards"><div><strong>Users</strong><span>Manage accounts and roles</span></div><div><strong>Announcements</strong><span>Create and publish platform notices</span></div><div><strong>Moderation</strong><span>Review platform activity</span></div><div><strong>Support</strong><span>Manage customer support tickets</span></div></section></>}</main></div>}
+import './admin-panel.css';
+
+type View='Overview'|'Users'|'Promotion Control Center'|'Sales Team Intelligence'|'Announcements'|'Moderation'|'Settings'|'Audit Logs'|'Support'|'Content';
+const items:[View,React.ElementType][]=[['Overview',LayoutDashboard],['Users',Users],['Promotion Control Center',Target],['Sales Team Intelligence',TrendingUp],['Announcements',Megaphone],['Moderation',ShieldCheck],['Settings',Settings],['Audit Logs',ScrollText],['Support',LifeBuoy],['Content',FileText]];
+
+export default function AdminPanel({onBack}:{onBack:()=>void}){
+ const [view,setView]=useState<View>('Overview');
+ const [collapsed,setCollapsed]=useState(false);
+ const [mobileOpen,setMobileOpen]=useState(false);
+ const choose=(next:View)=>{setView(next);setMobileOpen(false)};
+ return <div className={`admin-panel-page ${collapsed?'sidebar-collapsed':''}`}>
+  {mobileOpen&&<button className="admin-mobile-scrim" aria-label="Close admin navigation" onClick={()=>setMobileOpen(false)}/>} 
+  <aside className={`admin-panel-sidebar ${mobileOpen?'mobile-open':''}`}>
+   <div className="admin-sidebar-head"><div className="admin-brand"><div className="admin-brand-mark">D</div><div className="admin-brand-copy"><strong>DRIGHT</strong><small>Super Admin</small></div></div><button className="admin-icon-button admin-mobile-close" onClick={()=>setMobileOpen(false)} aria-label="Close navigation"><X size={18}/></button></div>
+   <div className="admin-sidebar-context"><span className="admin-context-dot"/><span className="admin-context-copy"><strong>Control Center</strong><small>Authorized workspace</small></span></div>
+   <nav className="admin-nav" aria-label="Administration">
+    <div className="admin-nav-label">Workspace</div>
+    {items.map(([label,Icon])=><button key={label} className={view===label?'active':''} onClick={()=>choose(label)} title={collapsed?label:undefined}><Icon size={18}/><span>{label}</span>{label==='Promotion Control Center'&&<i/>}</button>)}
+   </nav>
+   <div className="admin-sidebar-footer"><button className="admin-back" onClick={onBack} title={collapsed?'Back to DRIGHT':undefined}><ArrowLeft size={17}/><span>Back to DRIGHT</span></button></div>
+   <button className="admin-collapse-button" onClick={()=>setCollapsed(v=>!v)} aria-label={collapsed?'Expand navigation':'Collapse navigation'}>{collapsed?<ChevronRight size={18}/>:<ChevronLeft size={18}/>}</button>
+  </aside>
+  <main className="admin-panel-main">
+   <header className="admin-panel-topbar"><button className="admin-mobile-menu" onClick={()=>setMobileOpen(true)} aria-label="Open admin navigation"><Menu size={20}/></button><div><span className="admin-eyebrow">DRIGHT ADMINISTRATION</span><h1>{view}</h1><p>{view==='Promotion Control Center'?'Universal promotion operations, analytics and risk intelligence.':'Manage DRIGHT platform operations from one authorized workspace.'}</p></div><div className="admin-status"><span/> Live data</div></header>
+   {view==='Sales Team Intelligence'?<AdminSalesTeamIntelligence/>:view==='Promotion Control Center'?<PromotionControlCenter/>:<section className="admin-overview"><div className="admin-welcome-card"><div><span className="admin-eyebrow">AUTHORIZED WORKSPACE</span><h2>{view==='Overview'?'DRIGHT Super Admin':'Administration · '+view}</h2><p>{view==='Overview'?'Use the navigation to manage platform operations. Promotion and Sales Team intelligence are connected to their existing Supabase-backed systems.':'This section is connected to the existing DRIGHT administration architecture. Keep actions inside the authorized workflow.'}</p></div><ShieldCheck size={34}/></div><div className="admin-cards"><div><span><Users size={19}/></span><strong>Users</strong><small>Manage accounts and roles</small></div><div><span><Target size={19}/></span><strong>Promotions</strong><small>Campaigns, analytics and risk</small></div><div><span><ShieldCheck size={19}/></span><strong>Moderation</strong><small>Review platform activity</small></div><div><span><LifeBuoy size={19}/></span><strong>Support</strong><small>Manage support operations</small></div></div></section>}
+  </main>
+ </div>
+}
