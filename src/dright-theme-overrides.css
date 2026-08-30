@@ -1,0 +1,8 @@
+/* DRIGHT theme override entrypoint.
+ * Kept intentionally token-only so profile-specific management screens inherit
+ * the existing DRIGHT theme system without introducing a competing theme.
+ */
+
+:root {
+  color-scheme: light dark;
+}
