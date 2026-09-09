@@ -58,19 +58,16 @@ export default function SignInPage({ onBack, onAuthenticated }: AuthPageProps) {
       // Do not switch the UI into the authenticated app until Supabase has
       // actually persisted a usable session. This avoids a login-success flash
       // followed by an immediate unauthenticated state.
-      let session = data.session;
-      if (!session) {
+      if (!data.session) {
         const { data: persisted, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           setError(sessionError.message);
           return;
         }
-        session = persisted.session;
-      }
-
-      if (!session) {
-        setError('Sign-in succeeded but no session was created. Please try again.');
-        return;
+        if (!persisted.session) {
+          setError('Sign-in succeeded but no session was created. Please try again.');
+          return;
+        }
       }
 
       onAuthenticated();
