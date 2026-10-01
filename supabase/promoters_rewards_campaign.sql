@@ -126,7 +126,7 @@ create or replace function public.admin_review_promoter_submission(
 )
 returns table(status text)
 language plpgsql
-security definer
+security invoker
 set search_path=public
 as $$
 declare
@@ -198,7 +198,7 @@ grant execute on function public.admin_review_promoter_submission(uuid,text,text
 create or replace function public.admin_mark_promoter_reward_paid(p_submission_id uuid)
 returns void
 language plpgsql
-security definer
+security invoker
 set search_path=public
 as $$
 begin
