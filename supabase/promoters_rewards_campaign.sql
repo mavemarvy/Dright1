@@ -192,6 +192,7 @@ begin
 end
 $$;
 revoke all on function public.admin_review_promoter_submission(uuid,text,text) from public;
+revoke execute on function public.admin_review_promoter_submission(uuid,text,text) from anon;
 grant execute on function public.admin_review_promoter_submission(uuid,text,text) to authenticated;
 
 create or replace function public.admin_mark_promoter_reward_paid(p_submission_id uuid)
@@ -215,6 +216,7 @@ begin
 end
 $$;
 revoke all on function public.admin_mark_promoter_reward_paid(uuid) from public;
+revoke execute on function public.admin_mark_promoter_reward_paid(uuid) from anon;
 grant execute on function public.admin_mark_promoter_reward_paid(uuid) to authenticated;
 
 -- Private screenshot bucket. Public users can upload but cannot read.
