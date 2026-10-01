@@ -1,7 +1,20 @@
 {
   "rewrites": [
-    { "source": "/seller", "destination": "/seller.html" },
-    { "source": "/promoters-rewards", "destination": "/promoters-rewards.html" },
-    { "source": "/promoters-rewards-campaign", "destination": "/promoters-rewards.html" }
+    {
+      "source": "/seller",
+      "destination": "/seller.html"
+    },
+    {
+      "source": "/promoters-rewards",
+      "destination": "/promoters-rewards.html"
+    },
+    {
+      "source": "/promoters-rewards-campaign",
+      "destination": "/promoters-rewards.html"
+    },
+    {
+      "source": "/admin-promoters-rewards",
+      "destination": "/admin-promoters-rewards.html"
+    }
   ]
 }
