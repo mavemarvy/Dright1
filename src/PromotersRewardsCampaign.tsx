@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {BriefcaseBusiness,Check,CheckCircle2,Copy,ExternalLink,Ghost,ImagePlus,Instagram,Loader2,MessageCircle,MessagesSquare,Send,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
+import {BriefcaseBusiness,Check,CheckCircle2,Copy,ExternalLink,ImagePlus,Loader2,MessageCircle,Share2,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
 import {supabase} from './supabase';
 import './promoters-rewards-campaign.css';
 
@@ -159,13 +159,13 @@ export default function PromotersRewardsCampaign(){
           <button className="prc-primary" type="button" onClick={copyText}>{copied?<><Check size={18}/>Copied</>:<><Copy size={18}/>Copy text</>}</button>
           <div className="prc-share-heading"><strong>Send with</strong><small>Tap a platform. The exact campaign message is copied first.</small></div>
           <div className="prc-social-grid">
-            <SocialButton platform="Telegram" className="telegram" icon={<Send size={19}/>} onClick={()=>shareTo('Telegram')}/>
+            <SocialButton platform="Telegram" className="telegram" icon={<Share2 size={19}/>} onClick={()=>shareTo('Telegram')}/>
             <SocialButton platform="WhatsApp" className="whatsapp" icon={<MessageCircle size={19}/>} onClick={()=>shareTo('WhatsApp')}/>
             <SocialButton platform="WA Business" className="wa-business" icon={<BriefcaseBusiness size={19}/>} onClick={()=>shareTo('WhatsApp Business')}/>
-            <SocialButton platform="Messenger" className="messenger" icon={<MessagesSquare size={19}/>} onClick={()=>shareTo('Messenger')}/>
+            <SocialButton platform="Messenger" className="messenger" icon={<MessageCircle size={19}/>} onClick={()=>shareTo('Messenger')}/>
             <SocialButton platform="Facebook" className="facebook" icon={<span className="prc-f-mark">f</span>} onClick={()=>shareTo('Facebook')}/>
-            <SocialButton platform="Snapchat" className="snapchat" icon={<Ghost size={19}/>} onClick={()=>shareTo('Snapchat')}/>
-            <SocialButton platform="Instagram" className="instagram" icon={<Instagram size={19}/>} onClick={()=>shareTo('Instagram')}/>
+            <SocialButton platform="Snapchat" className="snapchat" icon={<ImagePlus size={19}/>} onClick={()=>shareTo('Snapchat')}/>
+            <SocialButton platform="Instagram" className="instagram" icon={<span className="prc-instagram-mark">◎</span>} onClick={()=>shareTo('Instagram')}/>
           </div>
           {shareNotice&&<div className="prc-share-notice">{shareNotice}</div>}
           <p className="prc-note">WhatsApp and Telegram support pre-filled sharing. For Messenger, Facebook, Snapchat and Instagram, the message is copied first, then the official platform opens for you to paste and send. No website URL is automatically added.</p>
