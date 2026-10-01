@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {ArrowRight,Banknote,Check,CheckCircle2,Clipboard,Copy,ExternalLink,Facebook,ImagePlus,Loader2,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
+import {ArrowRight,Banknote,Check,CheckCircle2,Clipboard,Copy,ExternalLink,Share2,ImagePlus,Loader2,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
 import {supabase} from './supabase';
 import './promoters-rewards-campaign.css';
 
@@ -117,7 +117,7 @@ export default function PromotersRewardsCampaign(){
           <div className="prc-step"><span>1</span><div><strong>Copy the message</strong><small>Do not edit the campaign text before sharing.</small></div></div>
           <div className="prc-share-box">{campaign.share_text}</div>
           <button className="prc-primary" type="button" onClick={copyText}>{copied?<><Check size={18}/>Copied</>:<><Copy size={18}/>Copy text</>}</button>
-          <div className="prc-platforms">{campaign.platforms.map(p=><span key={p}>{p==='Facebook'?<Facebook size={15}/>:<Clipboard size={15}/>} {p}</span>)}</div>
+          <div className="prc-platforms">{campaign.platforms.map(p=><span key={p}>{p==='Facebook'?<Share2 size={15}/>:<Clipboard size={15}/>} {p}</span>)}</div>
           <p className="prc-note">Sharing is manual. This page does not post to your social account and the campaign message does not automatically include a website link.</p>
         </section>
 
