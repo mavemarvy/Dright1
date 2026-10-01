@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {ArrowRight,Banknote,Check,CheckCircle2,Clipboard,Copy,ExternalLink,Share2,ImagePlus,Loader2,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
+import {BriefcaseBusiness,Check,CheckCircle2,Copy,ExternalLink,Ghost,ImagePlus,Instagram,Loader2,MessageCircle,MessagesSquare,Send,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
 import {supabase} from './supabase';
 import './promoters-rewards-campaign.css';
 
@@ -17,7 +17,7 @@ const FALLBACK:Campaign={
   hero_subtitle:'Share the campaign message on an approved social platform, upload a screenshot and submit your reward details for verification.',
   currency:'NGN',reward_amount:1000,winner_limit:50,approved_count:0,
   share_text:'Want to learn how affiliate marketing and online selling work? I found a free guide for beginners. Message me if you want the details.',
-  platforms:['WhatsApp','Snapchat','Facebook'],redirect_url:'https://dright.store',
+  platforms:['Telegram','WhatsApp','WhatsApp Business','Messenger','Facebook','Snapchat','Instagram'],redirect_url:'https://dright.store',
   redirect_label:'See more ways to earn money online',status:'active'
 };
 const money=(amount:number,currency:string)=>new Intl.NumberFormat('en-NG',{style:'currency',currency,maximumFractionDigits:0}).format(amount||0);
@@ -27,6 +27,7 @@ export default function PromotersRewardsCampaign(){
   const [loading,setLoading]=useState(true);
   const [serviceReady,setServiceReady]=useState(true);
   const [copied,setCopied]=useState(false);
+  const [shareNotice,setShareNotice]=useState('');
   const [file,setFile]=useState<File|null>(null);
   const [submitting,setSubmitting]=useState(false);
   const [submitError,setSubmitError]=useState('');
@@ -45,10 +46,49 @@ export default function PromotersRewardsCampaign(){
     setLoading(false);
   }
 
+  async function copyCampaignText(showCopied=true){
+    try{
+      await navigator.clipboard.writeText(campaign.share_text);
+    }catch{
+      const textarea=document.createElement('textarea');
+      textarea.value=campaign.share_text;
+      textarea.style.position='fixed';
+      textarea.style.opacity='0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+    if(showCopied){
+      setCopied(true);
+      window.setTimeout(()=>setCopied(false),1800);
+    }
+  }
+
   async function copyText(){
-    await navigator.clipboard.writeText(campaign.share_text);
+    await copyCampaignText(true);
+  }
+
+  async function shareTo(platform:string){
+    await copyCampaignText(false);
     setCopied(true);
+    setShareNotice(`${platform}: message copied. Opening the app so you can send it.`);
     window.setTimeout(()=>setCopied(false),1800);
+
+    const text=encodeURIComponent(campaign.share_text);
+    const destinations:Record<string,string>={
+      Telegram:`https://t.me/share/url?url=&text=${text}`,
+      WhatsApp:`https://wa.me/?text=${text}`,
+      'WhatsApp Business':`whatsapp-business://send?text=${text}`,
+      Messenger:'https://www.messenger.com/',
+      Facebook:'https://www.facebook.com/',
+      Snapchat:'https://www.snapchat.com/',
+      Instagram:'https://www.instagram.com/'
+    };
+
+    const destination=destinations[platform];
+    if(destination)window.location.href=destination;
   }
 
   async function refreshStatus(token=statusToken){
@@ -117,8 +157,18 @@ export default function PromotersRewardsCampaign(){
           <div className="prc-step"><span>1</span><div><strong>Copy the message</strong><small>Do not edit the campaign text before sharing.</small></div></div>
           <div className="prc-share-box">{campaign.share_text}</div>
           <button className="prc-primary" type="button" onClick={copyText}>{copied?<><Check size={18}/>Copied</>:<><Copy size={18}/>Copy text</>}</button>
-          <div className="prc-platforms">{campaign.platforms.map(p=><span key={p}>{p==='Facebook'?<Share2 size={15}/>:<Clipboard size={15}/>} {p}</span>)}</div>
-          <p className="prc-note">Sharing is manual. This page does not post to your social account and the campaign message does not automatically include a website link.</p>
+          <div className="prc-share-heading"><strong>Send with</strong><small>Tap a platform. The exact campaign message is copied first.</small></div>
+          <div className="prc-social-grid">
+            <SocialButton platform="Telegram" className="telegram" icon={<Send size={19}/>} onClick={()=>shareTo('Telegram')}/>
+            <SocialButton platform="WhatsApp" className="whatsapp" icon={<MessageCircle size={19}/>} onClick={()=>shareTo('WhatsApp')}/>
+            <SocialButton platform="WA Business" className="wa-business" icon={<BriefcaseBusiness size={19}/>} onClick={()=>shareTo('WhatsApp Business')}/>
+            <SocialButton platform="Messenger" className="messenger" icon={<MessagesSquare size={19}/>} onClick={()=>shareTo('Messenger')}/>
+            <SocialButton platform="Facebook" className="facebook" icon={<span className="prc-f-mark">f</span>} onClick={()=>shareTo('Facebook')}/>
+            <SocialButton platform="Snapchat" className="snapchat" icon={<Ghost size={19}/>} onClick={()=>shareTo('Snapchat')}/>
+            <SocialButton platform="Instagram" className="instagram" icon={<Instagram size={19}/>} onClick={()=>shareTo('Instagram')}/>
+          </div>
+          {shareNotice&&<div className="prc-share-notice">{shareNotice}</div>}
+          <p className="prc-note">WhatsApp and Telegram support pre-filled sharing. For Messenger, Facebook, Snapchat and Instagram, the message is copied first, then the official platform opens for you to paste and send. No website URL is automatically added.</p>
         </section>
 
         <form className="prc-card prc-form" onSubmit={submit}>
@@ -145,6 +195,10 @@ export default function PromotersRewardsCampaign(){
       </div>}
     </section>
   </main>
+}
+
+function SocialButton({platform,className,icon,onClick}:{platform:string;className:string;icon:React.ReactNode;onClick:()=>void}){
+  return <button type="button" className={`prc-social-button ${className}`} onClick={onClick}><span className="prc-social-icon">{icon}</span><span>{platform}</span></button>
 }
 
 function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="prc-field"><span>{label}</span>{children}</label>}
