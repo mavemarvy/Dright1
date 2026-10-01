@@ -13,7 +13,7 @@ create table if not exists public.promoter_campaigns (
   winner_limit integer not null default 50 check (winner_limit > 0),
   approved_count integer not null default 0 check (approved_count >= 0),
   share_text text not null,
-  platforms text[] not null default array['WhatsApp','Snapchat','Facebook']::text[],
+  platforms text[] not null default array['Telegram','WhatsApp','WhatsApp Business','Messenger','Facebook','Snapchat','Instagram']::text[],
   redirect_url text,
   redirect_label text not null default 'See more ways to earn money online',
   status text not null default 'active' check (status in ('active','paused','ended')),
@@ -255,7 +255,7 @@ insert into public.promoter_campaigns (
   1000,
   50,
   'Want to learn how affiliate marketing and online selling work? I found a free guide for beginners. Message me if you want the details.',
-  array['WhatsApp','Snapchat','Facebook']::text[],
+  array['Telegram','WhatsApp','WhatsApp Business','Messenger','Facebook','Snapchat','Instagram']::text[],
   'https://dright.store',
   'See more ways to earn money online',
   'active'
