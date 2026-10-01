@@ -3,6 +3,7 @@ name: Verify Promoters Rewards Campaign
 on:
   push:
     branches:
+      - main
       - feature/promoters-rewards-campaign
   pull_request:
     branches:
