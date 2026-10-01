@@ -72,7 +72,7 @@ export default function PromotersRewardsCampaign(){
     const id=crypto.randomUUID();
     const token=crypto.randomUUID();
     const extension=(file.name.split('.').pop()||'jpg').replace(/[^a-zA-Z0-9]/g,'').slice(0,8)||'jpg';
-    const proofPath=\`submissions/\${campaign.id}/\${id}.\${extension}\`;
+    const proofPath=`submissions/${campaign.id}/${id}.${extension}`;
     const {error:uploadError}=await supabase.storage.from(STORAGE_BUCKET).upload(proofPath,file,{cacheControl:'3600',upsert:false,contentType:file.type});
     if(uploadError){setSubmitError('We could not upload your screenshot. Please try again.');setSubmitting(false);return}
 
@@ -150,7 +150,7 @@ export default function PromotersRewardsCampaign(){
 function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="prc-field"><span>{label}</span>{children}</label>}
 
 function ResultCard({result,campaign,onCheck}:{result:{tone:string,title:string,body:string,showRedirect:boolean};campaign:Campaign;onCheck:()=>void}){
-  return <section className={\`prc-result \${result.tone}\`}>
+  return <section className={`prc-result ${result.tone}`}>
     <div className="prc-result-icon"><CheckCircle2 size={28}/></div>
     <h2>{result.title}</h2><p>{result.body}</p>
     <div className="prc-result-actions">
@@ -162,9 +162,9 @@ function ResultCard({result,campaign,onCheck}:{result:{tone:string,title:string,
 
 function statusCopy(s:StatusResult,c:Campaign){
   if(s.status==='approved')return s.payout_status==='paid'
-    ?{tone:'success',title:'Reward sent successfully',body:\`Your \${money(c.reward_amount,c.currency)} reward has been marked as paid.\`,showRedirect:false}
-    :{tone:'success',title:'Your proof was verified',body:\`Congratulations. Your submission qualified for the \${money(c.reward_amount,c.currency)} reward and is waiting for payout processing.\`,showRedirect:false};
-  if(s.status==='valid_but_full')return {tone:'full',title:'The rewarded slots are already filled',body:\`Your proof can be valid, but the first \${c.winner_limit} verified reward slots have already been claimed. You can still see other ways to earn online.\`,showRedirect:true};
+    ?{tone:'success',title:'Reward sent successfully',body:`Your ${money(c.reward_amount,c.currency)} reward has been marked as paid.`,showRedirect:false}
+    :{tone:'success',title:'Your proof was verified',body:`Congratulations. Your submission qualified for the ${money(c.reward_amount,c.currency)} reward and is waiting for payout processing.`,showRedirect:false};
+  if(s.status==='valid_but_full')return {tone:'full',title:'The rewarded slots are already filled',body:`Your proof can be valid, but the first ${c.winner_limit} verified reward slots have already been claimed. You can still see other ways to earn online.`,showRedirect:true};
   if(['rejected','invalid','duplicate'].includes(s.status))return {tone:'rejected',title:'Your proof was not accepted',body:s.verification_note||'This submission did not pass campaign verification. You can still see other ways to earn online.',showRedirect:true};
   return {tone:'pending',title:'Proof received',body:'Your screenshot and reward details are waiting for verification. Keep this page or return later to check the result.',showRedirect:false};
 }
