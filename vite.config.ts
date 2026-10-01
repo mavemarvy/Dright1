@@ -12,6 +12,7 @@ export default defineConfig({
         'seller-products': 'seller-products.html',
         employer: 'employer.html',
         'promoters-rewards': 'promoters-rewards.html',
+        'admin-promoters-rewards': 'admin-promoters-rewards.html',
       },
     },
   },
