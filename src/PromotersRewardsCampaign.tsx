@@ -241,11 +241,11 @@ export default function PromotersRewardsCampaign(){
       <section className="prc-discover-card">
         <div className="prc-discover-glow"/>
         <div><span>DON'T STOP AT ONE OPPORTUNITY</span><h2>Discover more ways to earn online</h2><p>Explore more Dright opportunities after you finish this challenge.</p></div>
-        {campaign.redirect_url&&<a className="prc-discover-button" href={campaign.redirect_url} target="_blank" rel="noopener noreferrer">{redirectLabel}<ArrowRight size={23}/></a>}
+        {campaign.redirect_url&&<a className="prc-discover-button" href={campaign.redirect_url} target="_blank" rel="noopener noreferrer"><span className="prc-discover-gift"><Gift size={28}/></span><span className="prc-discover-copy"><strong>{redirectLabel}</strong><small>Tap to explore more opportunities on Dright</small></span><span className="prc-discover-arrow"><ArrowRight size={26}/></span></a>}
       </section>
     </section>
 
-    {campaign.redirect_url&&<a className="prc-sticky-cta" href={campaign.redirect_url} target="_blank" rel="noopener noreferrer"><span>Discover more ways to earn online</span><ArrowRight size={20}/></a>}
+    {campaign.redirect_url&&<a className="prc-sticky-cta" href={campaign.redirect_url} target="_blank" rel="noopener noreferrer"><span className="prc-sticky-spark">✦</span><span className="prc-sticky-copy"><strong>Discover more ways to earn online</strong><small>Tap here to explore Dright opportunities</small></span><span className="prc-sticky-arrow"><ArrowRight size={24}/></span></a>}
   </main>
 }
 
