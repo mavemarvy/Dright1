@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
-import {BriefcaseBusiness,Check,CheckCircle2,Copy,ExternalLink,ImagePlus,Loader2,MessageCircle,Share2,ShieldCheck,Sparkles,UploadCloud} from 'lucide-react';
+import {ArrowRight,Check,CheckCircle2,Copy,ExternalLink,Flame,Gift,ImagePlus,Loader2,LockKeyhole,ShieldCheck,Trophy,UploadCloud,Zap} from 'lucide-react';
 import {supabase} from './supabase';
 import './promoters-rewards-campaign.css';
 
@@ -13,30 +13,46 @@ const SLUG='promoters-rewards-campaign';
 const STORAGE_BUCKET='promoter-proof';
 const FALLBACK:Campaign={
   id:'00000000-0000-0000-0000-000000000000',slug:SLUG,title:'Promoters Rewards Campaign',
-  hero_title:'Share. Submit proof. Earn a reward.',
-  hero_subtitle:'Share the campaign message on an approved social platform, upload a screenshot and submit your reward details for verification.',
+  hero_title:'Share it. Prove it. Get rewarded.',
+  hero_subtitle:'A simple Dright reward challenge: copy the campaign message, share it, upload proof and submit for verification.',
   currency:'NGN',reward_amount:1000,winner_limit:50,approved_count:0,
-  share_text:'Want to learn how affiliate marketing and online selling work? I found a free guide for beginners. Message me if you want the details.',
-  platforms:['Telegram','WhatsApp','WhatsApp Business','Messenger','Facebook','Snapchat','Instagram'],redirect_url:'https://dright.store',
-  redirect_label:'See more ways to earn money online',status:'active'
+  share_text:'Dright is opening up more ways for people to earn, sell, promote, work and grow online. I found this opportunity and thought you might want to check it out. Message me for the details.',
+  platforms:['Telegram','WhatsApp','WhatsApp Business','Messenger','Facebook','Snapchat','Instagram','X','TikTok'],redirect_url:'https://dright.store',
+  redirect_label:'Discover more ways to earn online',status:'active'
 };
 const money=(amount:number,currency:string)=>new Intl.NumberFormat('en-NG',{style:'currency',currency,maximumFractionDigits:0}).format(amount||0);
+const HOOKS=['ONE MESSAGE. ONE QUICK MISSION.','COPY IT. SHARE IT. SHOW PROOF.','FIRST VERIFIED SHARES TAKE THE SPOTS.','YOUR NEXT ONLINE OPPORTUNITY CAN START HERE.'];
+const SOCIALS=[
+  {name:'Telegram',slug:'telegram',bg:'#229ED9'},
+  {name:'WhatsApp',slug:'whatsapp',bg:'#25D366'},
+  {name:'WhatsApp Business',slug:'whatsapp',bg:'#0B9A58',business:true},
+  {name:'Messenger',slug:'messenger',bg:'linear-gradient(135deg,#00B2FF,#8A3AB9,#FF4F9A)'},
+  {name:'Facebook',slug:'facebook',bg:'#1877F2'},
+  {name:'Snapchat',slug:'snapchat',bg:'#FFFC00',fg:'#050505'},
+  {name:'Instagram',slug:'instagram',bg:'linear-gradient(135deg,#FEDA75,#FA7E1E 28%,#D62976 55%,#962FBF 76%,#4F5BD5)'},
+  {name:'X',slug:'x',bg:'#050505'},
+  {name:'TikTok',slug:'tiktok',bg:'#050505'}
+];
 
 export default function PromotersRewardsCampaign(){
   const [campaign,setCampaign]=useState<Campaign>(FALLBACK);
   const [loading,setLoading]=useState(true);
   const [serviceReady,setServiceReady]=useState(true);
   const [copied,setCopied]=useState(false);
+  const [copiedOnce,setCopiedOnce]=useState(false);
+  const [sharedOn,setSharedOn]=useState('');
   const [shareNotice,setShareNotice]=useState('');
   const [file,setFile]=useState<File|null>(null);
   const [submitting,setSubmitting]=useState(false);
   const [submitError,setSubmitError]=useState('');
   const [status,setStatus]=useState<StatusResult|null>(null);
   const [statusToken,setStatusToken]=useState(()=>localStorage.getItem('promoters-rewards-status-token')||'');
+  const [hookIndex,setHookIndex]=useState(0);
   const [form,setForm]=useState({full_name:'',contact:'',platform:'WhatsApp',payout_method:'Bank Transfer',bank_name:'',account_name:'',account_number:''});
 
   useEffect(()=>{loadCampaign()},[]);
   useEffect(()=>{if(statusToken)refreshStatus(statusToken)},[statusToken]);
+  useEffect(()=>{const timer=window.setInterval(()=>setHookIndex(i=>(i+1)%HOOKS.length),2100);return()=>window.clearInterval(timer)},[]);
 
   async function loadCampaign(){
     setLoading(true);
@@ -60,6 +76,7 @@ export default function PromotersRewardsCampaign(){
       document.execCommand('copy');
       textarea.remove();
     }
+    setCopiedOnce(true);
     if(showCopied){
       setCopied(true);
       window.setTimeout(()=>setCopied(false),1800);
@@ -73,6 +90,8 @@ export default function PromotersRewardsCampaign(){
   async function shareTo(platform:string){
     await copyCampaignText(false);
     setCopied(true);
+    setSharedOn(platform);
+    setForm(v=>({...v,platform}));
     setShareNotice(`${platform}: message copied. Opening the app so you can send it.`);
     window.setTimeout(()=>setCopied(false),1800);
 
@@ -84,7 +103,9 @@ export default function PromotersRewardsCampaign(){
       Messenger:'https://www.messenger.com/',
       Facebook:'https://www.facebook.com/',
       Snapchat:'https://www.snapchat.com/',
-      Instagram:'https://www.instagram.com/'
+      Instagram:'https://www.instagram.com/',
+      X:`https://twitter.com/intent/tweet?text=${text}`,
+      TikTok:'https://www.tiktok.com/'
     };
 
     const destination=destinations[platform];
@@ -132,74 +153,112 @@ export default function PromotersRewardsCampaign(){
   }
 
   const remaining=Math.max(0,campaign.winner_limit-campaign.approved_count);
+  const claimedPercent=Math.min(100,(campaign.approved_count/Math.max(campaign.winner_limit,1))*100);
+  const missionDone=[copiedOnce,Boolean(sharedOn),Boolean(file)].filter(Boolean).length;
+  const missionPercent=(missionDone/3)*100;
+  const redirectLabel=campaign.redirect_label||'Discover more ways to earn online';
   const result=useMemo(()=>status?statusCopy(status,campaign):null,[status,campaign]);
 
   return <main className="prc-page">
+    <div className="prc-floating-orb orb-one"/><div className="prc-floating-orb orb-two"/>
     <section className="prc-shell">
-      <header className="prc-brand"><div className="prc-mark">D</div><div><strong>DRIGHT</strong><span>{campaign.title}</span></div></header>
+      <header className="prc-topbar">
+        <div className="prc-brand"><div className="prc-mark"><span>D</span></div><div><strong>DRIGHT</strong><span>Promoters Rewards</span></div></div>
+        <div className="prc-live"><i/> LIVE CHALLENGE</div>
+      </header>
 
-      <div className="prc-hero">
-        <div className="prc-badge"><Sparkles size={16}/> Promoters Rewards Campaign</div>
-        <h1>{campaign.hero_title}</h1>
-        <p>{campaign.hero_subtitle}</p>
-        <div className="prc-reward-card">
-          <span>Reward per successful verification</span>
-          <strong>{money(campaign.reward_amount,campaign.currency)}</strong>
-          <small>{remaining} of {campaign.winner_limit} reward slots currently remain</small>
+      <section className="prc-hero">
+        <div className="prc-hero-copy">
+          <div className="prc-kicker"><Zap size={17}/> QUICK REWARD MISSION</div>
+          <div className="prc-hook-wrap"><span key={hookIndex} className="prc-hook">{HOOKS[hookIndex]}</span></div>
+          <h1>{campaign.hero_title}</h1>
+          <p>{campaign.hero_subtitle}</p>
+          <div className="prc-hero-chips"><span><Check/>Copy message</span><span><Check/>Share on a listed app</span><span><Check/>Upload proof</span></div>
         </div>
-      </div>
+        <div className="prc-prize-stage" aria-hidden="true">
+          <div className="prc-confetti c1">✦</div><div className="prc-confetti c2">●</div><div className="prc-confetti c3">✦</div><div className="prc-confetti c4">◆</div>
+          <div className="prc-trophy"><Trophy size={72}/></div>
+          <div className="prc-gift"><Gift size={44}/></div>
+          <div className="prc-coin coin1">₦</div><div className="prc-coin coin2">₦</div><div className="prc-coin coin3">₦</div>
+        </div>
+      </section>
+
+      <section className="prc-scoreboard">
+        <div className="prc-reward-big"><small>EACH VERIFIED WINNER GETS</small><strong>{money(campaign.reward_amount,campaign.currency)}</strong><span>reward</span></div>
+        <div className="prc-slots">
+          <div className="prc-slot-title"><span><Flame size={18}/> FIRST {campaign.winner_limit}</span><b>{remaining} spots left</b></div>
+          <div className="prc-slot-bar"><i style={{width:claimedPercent+'%'}}/></div>
+          <small>{campaign.approved_count} verified · {remaining} remaining</small>
+        </div>
+      </section>
+
+      <section className="prc-mission">
+        <div className="prc-mission-head"><div><span>YOUR MISSION</span><strong>{missionDone}/3 complete</strong></div><b>{Math.round(missionPercent)}%</b></div>
+        <div className="prc-mission-bar"><i style={{width:missionPercent+'%'}}/></div>
+        <div className="prc-mission-steps"><MissionStep done={copiedOnce} n="1" label="Copy"/><MissionStep done={Boolean(sharedOn)} n="2" label="Share"/><MissionStep done={Boolean(file)} n="3" label="Proof"/></div>
+      </section>
 
       {loading?<div className="prc-state"><Loader2 className="prc-spin"/>Loading campaign…</div>:
       result?<ResultCard result={result} campaign={campaign} onCheck={()=>refreshStatus()}/>:
       remaining===0?<ResultCard result={statusCopy({status:'valid_but_full',verification_note:null,payout_status:'not_required',updated_at:new Date().toISOString()},campaign)} campaign={campaign} onCheck={()=>{}}/>:
-      <div className="prc-flow">
-        <section className="prc-card">
-          <div className="prc-step"><span>1</span><div><strong>Copy the message</strong><small>Do not edit the campaign text before sharing.</small></div></div>
-          <div className="prc-share-box">{campaign.share_text}</div>
-          <button className="prc-primary" type="button" onClick={copyText}>{copied?<><Check size={18}/>Copied</>:<><Copy size={18}/>Copy text</>}</button>
-          <div className="prc-share-heading"><strong>Send with</strong><small>Tap a platform. The exact campaign message is copied first.</small></div>
-          <div className="prc-social-grid">
-            <SocialButton platform="Telegram" className="telegram" icon={<Share2 size={19}/>} onClick={()=>shareTo('Telegram')}/>
-            <SocialButton platform="WhatsApp" className="whatsapp" icon={<MessageCircle size={19}/>} onClick={()=>shareTo('WhatsApp')}/>
-            <SocialButton platform="WA Business" className="wa-business" icon={<BriefcaseBusiness size={19}/>} onClick={()=>shareTo('WhatsApp Business')}/>
-            <SocialButton platform="Messenger" className="messenger" icon={<MessageCircle size={19}/>} onClick={()=>shareTo('Messenger')}/>
-            <SocialButton platform="Facebook" className="facebook" icon={<span className="prc-f-mark">f</span>} onClick={()=>shareTo('Facebook')}/>
-            <SocialButton platform="Snapchat" className="snapchat" icon={<ImagePlus size={19}/>} onClick={()=>shareTo('Snapchat')}/>
-            <SocialButton platform="Instagram" className="instagram" icon={<span className="prc-instagram-mark">◎</span>} onClick={()=>shareTo('Instagram')}/>
-          </div>
-          {shareNotice&&<div className="prc-share-notice">{shareNotice}</div>}
-          <p className="prc-note">WhatsApp and Telegram support pre-filled sharing. For Messenger, Facebook, Snapchat and Instagram, the message is copied first, then the official platform opens for you to paste and send. No website URL is automatically added.</p>
+      <>
+        <section className="prc-card prc-message-card">
+          <div className="prc-section-title"><div className="prc-section-icon">01</div><div><span>CAMPAIGN MESSAGE</span><h2>Copy exactly. Share quickly.</h2></div></div>
+          <div className="prc-share-box"><p>{campaign.share_text}</p><button type="button" className="prc-copy-mini" onClick={()=>copyCampaignText(true)}><Copy size={20}/></button></div>
+          <button className="prc-copy-main" type="button" onClick={()=>copyCampaignText(true)}>{copied?<><Check size={20}/>MESSAGE COPIED</>:<><Copy size={20}/>COPY CAMPAIGN MESSAGE</>}</button>
+        </section>
+
+        <section className="prc-card prc-share-card">
+          <div className="prc-section-title"><div className="prc-section-icon">02</div><div><span>CHOOSE WHERE TO SHARE</span><h2>Big app buttons. One tap.</h2></div></div>
+          <div className="prc-social-grid">{SOCIALS.map(s=><SocialBubble key={s.name} platform={s} active={sharedOn===s.name} onClick={()=>shareTo(s.name)}/>)}</div>
+          {shareNotice&&<div className="prc-share-notice"><CheckCircle2 size={17}/>{shareNotice}</div>}
+          <p className="prc-note">WhatsApp, Telegram and X can receive the text pre-filled. Other apps open after the message is copied so you can paste it. Dright never posts without your action.</p>
         </section>
 
         <form className="prc-card prc-form" onSubmit={submit}>
-          <div className="prc-step"><span>2</span><div><strong>Submit your proof</strong><small>Upload the screenshot, then add the reward account details.</small></div></div>
-          <label className="prc-upload">
+          <div className="prc-section-title"><div className="prc-section-icon">03</div><div><span>PROOF + PAYOUT</span><h2>Show us the share.</h2></div></div>
+          <label className={'prc-upload '+(file?'has-file':'')}>
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setFile(e.target.files?.[0]||null)}/>
-            <UploadCloud size={26}/>
-            <strong>{file?file.name:'Upload screenshot'}</strong>
-            <small>PNG, JPG or WEBP · maximum 5 MB</small>
+            <div className="prc-upload-icon">{file?<CheckCircle2 size={30}/>:<UploadCloud size={32}/>}</div>
+            <strong>{file?'Screenshot ready':'Tap to upload your screenshot'}</strong>
+            <small>{file?file.name:'PNG, JPG or WEBP · maximum 5 MB'}</small>
           </label>
           <div className="prc-grid">
-            <Field label="Full name"><input required value={form.full_name} onChange={e=>setForm({...form,full_name:e.target.value})}/></Field>
-            <Field label="Phone number or email"><input required value={form.contact} onChange={e=>setForm({...form,contact:e.target.value})}/></Field>
+            <Field label="Full name"><input required value={form.full_name} onChange={e=>setForm({...form,full_name:e.target.value})} placeholder="Your full name"/></Field>
+            <Field label="Phone number or email"><input required value={form.contact} onChange={e=>setForm({...form,contact:e.target.value})} placeholder="How we can identify you"/></Field>
             <Field label="Shared on"><select value={form.platform} onChange={e=>setForm({...form,platform:e.target.value})}>{campaign.platforms.map(p=><option key={p}>{p}</option>)}</select></Field>
             <Field label="Reward method"><select value={form.payout_method} onChange={e=>setForm({...form,payout_method:e.target.value})}><option>Bank Transfer</option><option>OPay</option><option>PalmPay</option><option>Moniepoint</option></select></Field>
-            <Field label="Bank / wallet"><input required value={form.bank_name} onChange={e=>setForm({...form,bank_name:e.target.value})}/></Field>
-            <Field label="Account name"><input required value={form.account_name} onChange={e=>setForm({...form,account_name:e.target.value})}/></Field>
-            <Field label="Account number"><input required inputMode="numeric" autoComplete="off" value={form.account_number} onChange={e=>setForm({...form,account_number:e.target.value.replace(/\D/g,'').slice(0,16)})}/></Field>
+            <Field label="Bank / wallet"><input required value={form.bank_name} onChange={e=>setForm({...form,bank_name:e.target.value})} placeholder="Bank or wallet"/></Field>
+            <Field label="Account name"><input required value={form.account_name} onChange={e=>setForm({...form,account_name:e.target.value})} placeholder="Account holder"/></Field>
+            <Field label="Account number"><input required inputMode="numeric" autoComplete="off" value={form.account_number} onChange={e=>setForm({...form,account_number:e.target.value.replace(/\D/g,'').slice(0,16)})} placeholder="Account number"/></Field>
           </div>
           {submitError&&<div className="prc-error">{submitError}</div>}
-          <button className="prc-primary prc-submit" disabled={submitting}>{submitting?<><Loader2 className="prc-spin" size={18}/>Submitting…</>:<><ImagePlus size={18}/>Submit proof for verification</>}</button>
-          <div className="prc-security"><ShieldCheck size={16}/><span>Your payout details and screenshot are private and are only available to authorized campaign administrators.</span></div>
+          <button className="prc-submit" disabled={submitting}>{submitting?<><Loader2 className="prc-spin" size={20}/>SUBMITTING…</>:<><ImagePlus size={20}/>SUBMIT PROOF FOR VERIFICATION</>}</button>
+          <div className="prc-security"><LockKeyhole size={17}/><span>Your screenshot and payout details are private and only visible to authorized campaign administrators.</span></div>
         </form>
-      </div>}
+      </>}
+
+      <section className="prc-discover-card">
+        <div className="prc-discover-glow"/>
+        <div><span>DON'T STOP AT ONE OPPORTUNITY</span><h2>Discover more ways to earn online</h2><p>Explore more Dright opportunities after you finish this challenge.</p></div>
+        {campaign.redirect_url&&<a className="prc-discover-button" href={campaign.redirect_url} target="_blank" rel="noopener noreferrer">{redirectLabel}<ArrowRight size={23}/></a>}
+      </section>
     </section>
+
+    {campaign.redirect_url&&<a className="prc-sticky-cta" href={campaign.redirect_url} target="_blank" rel="noopener noreferrer"><span>Discover more ways to earn online</span><ArrowRight size={20}/></a>}
   </main>
 }
 
-function SocialButton({platform,className,icon,onClick}:{platform:string;className:string;icon:React.ReactNode;onClick:()=>void}){
-  return <button type="button" className={`prc-social-button ${className}`} onClick={onClick}><span className="prc-social-icon">{icon}</span><span>{platform}</span></button>
+function SocialBubble({platform,active,onClick}:{platform:any;active:boolean;onClick:()=>void}){
+  const color=platform.fg||'#fff';
+  const src='https://cdn.simpleicons.org/'+platform.slug+'/'+color.replace('#','');
+  return <button type="button" className={'prc-social-bubble '+(active?'active':'')} onClick={onClick} aria-label={'Share with '+platform.name}>
+    <span className="prc-app-icon" style={{background:platform.bg}}><img src={src} alt=""/>{platform.business&&<b>B</b>}</span>
+    <strong>{platform.name==='WhatsApp Business'?'WA Business':platform.name}</strong>
+    {active&&<i><Check size={12}/></i>}
+  </button>
 }
+function MissionStep({done,n,label}:{done:boolean;n:string;label:string}){return <div className={done?'done':''}><b>{done?<Check size={15}/>:n}</b><span>{label}</span></div>}
 
 function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="prc-field"><span>{label}</span>{children}</label>}
 
